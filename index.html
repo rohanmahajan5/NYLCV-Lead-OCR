@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NYLCV OCR Tool</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
+    <style>
+    /* CSS STYLES FOR FORMATTING */
+        table, td {
+            border: 1px solid #4a4a4a;
+        }
+        td {
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+        @font-face {
+            font-family: "myfont";
+            src: url("assets/Proxima\ Nova\ Regular.woff") format('woff');
+        }
+        body {
+            font-family: myfont;
+            /*background-image: url('assets/forest.jpg');*/
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-size: cover;
+            color:white;
+            height: 100vh;
+            width: 100vw;
+        }
+        #overlay {
+            position: absolute;
+            background-color: rgba(20,20,20, 1);
+            width:70%;
+            height:100%;
+            top:0;
+            left:15%;
+            opacity:0.8;
+            box-shadow: 0px 0px 25px 25px rgba(20,20,20, 1);
+            z-index:-5;
+        }
+        h1 {
+            text-align: center;
+            color:white;
+            letter-spacing: 0.1em;
+            font-size:3em;
+        }
+        #content {
+            display:flex;
+            /*border: 1px solid green;*/
+            width:70%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #content div {
+            /*border: 1px solid blue;*/
+        }
+        #left {
+            padding-left: 10%;
+            width:30%;
+            border-right: 1px solid grey;
+        }
+        #right {
+            padding-left: 5%;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        #custom-file-upload {
+            border: 0.5px solid #ccc;
+            display: inline-block;
+            padding: 4px 8px;
+            cursor: pointer;
+            border-radius: 5px;
+            color: #4287f5;
+            font-family:Arial, Helvetica, sans-serif;
+            font-size:smaller;
+        }
+        select {
+            background-color:rgba(20,20,20, 1);
+            color: #4287f5;
+            padding: 5px;
+            border-radius: 5px;
+        }
+        table {
+            overflow-y:scroll;
+            color: #d4d4d4;
+        }
+        #txt {
+            color:#bf9d8e;
+        }
+        #doc-link {
+            text-decoration: none;
+            color: #eb983f;
+        }
+        #refresh {
+            color:#eb983f;
+            cursor: pointer;
+        }
+        #copy-button {
+            border: 0.5px solid #ccc;
+            display: inline-block;
+            padding: 4px 8px;
+            cursor: pointer;
+            border-radius: 5px;
+            color: #4287f5;
+            font-family:Arial, Helvetica, sans-serif;
+            font-size:smaller;
+        }
+        #delete-button {
+            border: 0.5px solid #ccc;
+            display: inline-block;
+            padding: 4px 8px;
+            cursor: pointer;
+            border-radius: 5px;
+            color: #d99deb;
+            font-family:Arial, Helvetica, sans-serif;
+            font-size:smaller;
+        }
+        #clear-button {
+            border: 0.5px solid #ccc;
+            display: inline-block;
+            padding: 4px 8px;
+            cursor: pointer;
+            border-radius: 5px;
+            color:#d64f5f;
+            font-family:Arial, Helvetica, sans-serif;
+            font-size:smaller;
+        }
+        #bkg-btn {
+            border: 0.5px solid #ccc;
+            display: inline-block;
+            padding: 4px 8px;
+            cursor: pointer;
+            border-radius: 5px;
+            color: #4287f5;
+            font-family:Arial, Helvetica, sans-serif;
+            font-size:smaller;
+            position: absolute;
+            top:0%;
+            left:1%;
+            background-color: rgba(20,20,20, 0.5);
+        }
+        #bkg-btn:hover {
+            opacity:0.1;
+        }
+        #tag {
+            position: fixed;
+            left:5px;
+            bottom:2px;
+            font-size:0.8em;
+        }
+        /*#warning {
+            color: #f7c12d;
+        }*/
+        #total-bar {
+            width: 80%;
+            background-color: #ddd;
+            border-radius:10px;
+            opacity: 0;
+        }
+        #loading-bar {
+            width: 10%;
+            border-radius:10px;
+            height: 3px;
+            background-color: #4287f5;
+            text-align: center;
+            line-height: 20px;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+        <!-- all of these details are located in the document which is linked -->
+        <!--<details id='directions'>
+            <summary>Directions (click arrow on the left to expand/collapse)</summary>
+            <h2>what to do:</h2>
+            <ol>
+                <li>go to <a href="https://onlineocr.net" target="_blank">OnlineOCR.net</a>, download result as .txt file</li>
+                <li>select the downloaded file with the button below</li>
+                <li>the program will generate your table of results and corresponding tags</li>
+                <li>copy and paste into the spreadsheet, and remember to <em>double check the output!</em></li>
+            </ol>
+            <h3>common OCR mistakes:</h3>
+            <ul>
+                <li>swapping 6 and 8</li>
+                <li>swapping 1 and 4</li>
+                <li>swapping 1 (one) and I (i)</li>
+                <li>swapping 0 and G</li>
+                <li>swapping . and , </li>
+            </ul>
+            
+        </details>-->
+        <div id='overlay'></div>
+        <p id='bkg-btn'>&#9728;</p>
+        <h1> NYLCV Lead Project - OCR Scripts</h1>
+
+
+        <div id='content'>
+            <!-- left side of the screen, including drop-down menu -->
+            <div id='left'>
+                <p>Click <a id="doc-link" target='_blank' href="https://docs.google.com/document/d/12IxM3woZaxCQDTIyp5KcLrW3FNeVvrx-67ciDL_5Ku8/edit">here</a> for the directions on how to use this tool.</p>
+                <p>Select the report type/company:</p>
+                <select id="report_type" name="type">
+                    <option>---</option>
+                    <option value="nye_temp_fix">NYE Temp. Fix</option>
+                    <option value="sgs">SGS</option>
+                    <option value="lsl">LSL</option>
+                    <option value="emsl">EMSL</option>
+                    <option value="pace-analytical">Pace - Analytical Results</option>
+                    <option value="pace-laboratory">Pace - Laboratory Results</option>
+                    <option value="jcbroderick">JC Broderick</option>
+                    <option value="microbac">Microbac</option>
+                    <option value="regcom">RegCom</option>
+                    <option value="fulmont">Fulmont</option>
+                    <option value="ehs">EHS</option>
+                    <option value="adirondack">Adirondack</option>
+                    <option value="iatl">iATL</option>
+                    <option value="envirotest">Envirotest</option>
+                    <option value="capital-region">Capital Region</option>
+                    <option value="endyne">Endyne</option>
+                    <option value="h2m">H2M</option>
+                    <option value="cna">CNA</option>
+                    <option value="jh-consulting">JH Consulting</option>
+                    <option value="schneider">Schneider / SLGi</option>
+                    <option value="lianalytical">Long Island Analytical</option>
+                    <option value="als">ALS</option>
+                    <option value="wsp">WSP</option>
+                    <option value="york">York</option>
+                    <option value="phoenix">Phoenix</option>
+                    <option value="njal">NJAL</option>
+                    <option value="merit">Merit</option>
+                    <option value="st-peter">St. Peter's</option>
+                    <option value="accurate">Accurate</option>
+                    <option value="enviroscience">Enviroscience [≈]</option>
+                    <option value="nye">NYE - All Data Fields</option>
+                    <option value="nye-nocode">NYE - No School Code</option>
+                    <option value="nye-notag">NYE - No Tag Number</option>
+                    <option value="envoy">Envoy [x]</option>
+                    <option value="eurofins">Eurofins [x]</option>
+                </select>
+                <br><br>
+                <label for="txt">Upload your plain text file ( <span id='txt'>.txt</span> ):</label><br><br>
+                <label id="custom-file-upload">
+                    Choose file
+                    <input type="file" id="input-file">
+                </label>
+                <br><br><br>
+                <div id="total-bar">
+                    <div id="loading-bar"></div>
+                  </div>
+                <!-- refresh link no longer needed -->
+                <!--<p>Please <span id="refresh">refresh this window</span> every time you use it.</p>-->
+                
+            </div>
+            <!-- right side of the screen -->
+            <div id='right'>
+                <p>Results will be generated here: &emsp; <span id="copy-button">select</span> <span id="clear-button">clear</span> <span id="delete-button">delete keyword</span> </p>
+                <p id='warning'></p>
+                <!-- table starts empty but is filled up by the javascript file -->
+                <table id="table">
+                
+                </table>
+            </div>
+        </div>
+        <p id='tag'>Made by Rohan Mahajan</p>
+    <!-- link to javascript file -->
+    <script src="index.js"></script>
+</body>
+</html>
