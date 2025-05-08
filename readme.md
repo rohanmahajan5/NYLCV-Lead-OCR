@@ -1,15 +1,15 @@
-NYLCV OCR Tool
+NYLCV OCR Tool<br/>
 
 
-File breakdown:
-index.html: This HTML file can be run offile with the same functionality. All logic is client side.
-index.js: All processing logic is found here. Each report type is implemented individually.
+File breakdown:<br/>
+index.html: This HTML file can be run offile with the same functionality. All logic is client side.<br/>
+index.js: All processing logic is found here. Each report type is implemented individually.<br/>
 
-assets:
-- ./favicon: favicon
-- forest.png: background
-- Proxima Nova Regular.woff: external font file
+assets:<br/>
+- ./favicon: favicon<br/>
+- forest.png: background<br/>
+- Proxima Nova Regular.woff: external font file<br/>
 
 
-Contacts:
-Rohan Mahajan, rm939@cornell.edu
+Contacts:<br/>
+Rohan Mahajan, rm939@cornell.edu<br/>
