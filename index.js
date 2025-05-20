@@ -210,12 +210,23 @@ function output(txt_str) {
                     line_arr.splice(-2, 1)
 
                 var result = line_arr.pop();
-// Sanitize malformed results like '19.919.9' or '6.966.96'
+
+// 🛑 Skip values explicitly marked as below detection
+if (result.includes('<')) {
+    continue;
+}
+
+// ✅ Sanitize malformed results like '19.919.9' or '6.966.96'
 let cleanResult = result.match(/(\d{1,3}\.\d{1,2})/);
 if (cleanResult) {
-    result = parseFloat(cleanResult[1]); // 💡 Fix: convert to number
+    result = parseFloat(cleanResult[1]);
+
+    // ⚠️ Skip values outside desired range
+    if (result < 1 || result >= 15) {
+        continue;
+    }
 } else {
-    continue; // skip if no valid number found
+    continue;
 }
                 var tag = line_arr.join('').replace("INITIAL","").replace(";","")
                 if (result < 15) {
