@@ -798,10 +798,14 @@ if (cleanResult) {
                     while (isNaN(result_arr[m]) || m > 5 || result_arr[m] === 'ND') {
                         m++;
                     }
-                    var result = result_arr[m]
-                    console.log(result)
+                    var result = result_arr[m];
+console.log(result);
+
+if (result === undefined) {
+    continue;
+}
                 }
-                if (result != undefined && !(result.includes('ND')) && 
+                if (typeof result === 'string' && !result.includes('ND') && 
                     (parseFloat(result) > 1.00 && parseFloat(result) < 15 || parseFloat(result) > 0.001 && parseFloat(result) < 0.015)) {
                     final_arr[1].push(tag);
                     final_arr[0].push((parseFloat(result)));
