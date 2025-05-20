@@ -209,7 +209,14 @@ function output(txt_str) {
                     // take off the tag number - THIS IS THE ONLY STEP THAT VARIES FROM NYE-NOTAG
                     line_arr.splice(-2, 1)
 
-                var result = line_arr.pop()
+                var result = line_arr.pop();
+// Sanitize malformed results like '19.919.9' or '6.966.96'
+let cleanResult = result.match(/(\d{1,3}\.\d{1,2})/);
+if (cleanResult) {
+    result = cleanResult[1];
+} else {
+    continue; // skip if no valid number found
+}
                 var tag = line_arr.join('').replace("INITIAL","").replace(";","")
                 if (result < 15) {
                     if (flagged) {
