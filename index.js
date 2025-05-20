@@ -793,16 +793,14 @@ if (cleanResult) {
                         k++;
                     }
                     var m = 0
-                    var result_arr = txt_arr[k].split(' ')
+                    var result_arr = txt_arr[k].trim().split(/\s+/);  // Split by any whitespace
                     console.log(parseFloat(txt_arr[k].split(' ')[0]))
                     while (isNaN(result_arr[m]) || m > 5 || result_arr[m] === 'ND') {
                         m++;
                     }
                     var result = result_arr[m];
-console.log(result);
-
-if (result === undefined) {
-    continue;
+if (typeof result !== 'string' || result.includes('<') || result.includes('ND')) {
+    continue;  // Skip non-detects or malformed values
 }
                 }
                 if (typeof result === 'string' && !result.includes('ND') && 
