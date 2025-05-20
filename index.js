@@ -213,7 +213,7 @@ function output(txt_str) {
 // Sanitize malformed results like '19.919.9' or '6.966.96'
 let cleanResult = result.match(/(\d{1,3}\.\d{1,2})/);
 if (cleanResult) {
-    result = cleanResult[1];
+    result = parseFloat(cleanResult[1]); // 💡 Fix: convert to number
 } else {
     continue; // skip if no valid number found
 }
