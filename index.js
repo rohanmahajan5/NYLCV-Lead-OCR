@@ -799,9 +799,9 @@ while (isNaN(result_arr[m]) || m > 5 || result_arr[m] === 'ND') {
     m++;
 }
 var result = result_arr[m];
-if (typeof result !== 'string') continue;
-if (result.includes('<') || result.includes('ND')) continue;
-
+if (typeof result !== 'string' || !result.trim() || result.includes('<') || result.includes('ND')) {
+    continue;
+}
 let value = parseFloat(result);
 if ((value > 1.00 && value < 15) || (value > 0.001 && value < 0.015)) {
     final_arr[1].push(tag);
