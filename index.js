@@ -799,13 +799,15 @@ while (isNaN(result_arr[m]) || m > 5 || result_arr[m] === 'ND') {
     m++;
 }
 var result = result_arr[m];
-if (typeof result !== 'string' || !result.trim() || result.includes('<') || result.includes('ND')) {
-    continue;
+if (!result || typeof result !== 'string' || !result.trim() || result.includes('<') || result.includes('ND')) {
+  console.log('Skipping result:', result);
+  continue;
 }
 let value = parseFloat(result);
 if ((value > 1.00 && value < 15) || (value > 0.001 && value < 0.015)) {
-    final_arr[1].push(tag);
-    final_arr[0].push(value);
+  console.log('PUSHING:', tag, value);
+  final_arr[1].push(tag);
+  final_arr[0].push(value);
 }
                 }
             }
