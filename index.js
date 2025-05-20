@@ -793,20 +793,20 @@ if (cleanResult) {
                         k++;
                     }
                     var m = 0
-                    var result_arr = txt_arr[k].trim().split(/\s+/);  // Split by any whitespace
-                    console.log(parseFloat(txt_arr[k].split(' ')[0]))
-                    while (isNaN(result_arr[m]) || m > 5 || result_arr[m] === 'ND') {
-                        m++;
-                    }
-                    var result = result_arr[m];
-if (typeof result !== 'string' || result.includes('<') || result.includes('ND')) {
-    continue;  // Skip non-detects or malformed values
+                  var m = 0;
+var result_arr = txt_arr[k].trim().split(/\s+/);
+while (isNaN(result_arr[m]) || m > 5 || result_arr[m] === 'ND') {
+    m++;
 }
-                }
-                if (typeof result === 'string' && !result.includes('ND') && 
-                    (parseFloat(result) > 1.00 && parseFloat(result) < 15 || parseFloat(result) > 0.001 && parseFloat(result) < 0.015)) {
-                    final_arr[1].push(tag);
-                    final_arr[0].push((parseFloat(result)));
+var result = result_arr[m];
+if (typeof result !== 'string') continue;
+if (result.includes('<') || result.includes('ND')) continue;
+
+let value = parseFloat(result);
+if ((value > 1.00 && value < 15) || (value > 0.001 && value < 0.015)) {
+    final_arr[1].push(tag);
+    final_arr[0].push(value);
+}
                 }
             }
         }
