@@ -779,14 +779,17 @@ if (cleanResult) {
     if (type === 'als') {
     for (let i = 0; i < txt_arr.length; i++) {
         let line = txt_arr[i]?.trim();
+
         if (line === 'Analytical Report' || line.toUpperCase() === 'ANALYTICAL RESULTS') {
             let j = i;
+
             while (j < txt_arr.length && !(txt_arr[j].includes('Sample Name:') || txt_arr[j].includes('Sample ID:'))) {
                 j++;
             }
-            const tagLine = txt_arr[j] || '';
-            const tagParts = tagLine.trim().split(/\s+/);
-            const tag = tagParts.length > 2 ? tagParts[2] : 'UNKNOWN';
+
+            let tagLine = txt_arr[j] || '';
+            let tagParts = tagLine.trim().split(/\s+/);
+            let tag = tagParts.length > 2 ? tagParts[2] : 'UNKNOWN';
 
             if (tag.toLowerCase().includes('method')) continue;
 
@@ -794,37 +797,39 @@ if (cleanResult) {
             while (k < txt_arr.length && !txt_arr[k].toLowerCase().includes('lead')) {
                 k++;
             }
-            if (k >= txt_arr.length) {
-                console.log('No lead line found after tag:', tag);
-                continue;
-            }
-            // 🚨 Fix: skip over label-only lines like "Lead, Total"
+
+            // Skip if we never find the Lead line
+            if (k >= txt_arr.length) continue;
+
             if (txt_arr[k].toLowerCase().includes('total') || txt_arr[k].toLowerCase().includes('lead,')) {
                 console.log('Skipping header line:', txt_arr[k]);
-                continue;
+                k++; // move forward
             }
-            // Start scanning forward for actual values
-let scan = k + 1;
-let result = undefined;
 
-while (scan < txt_arr.length && result === undefined) {
-    const parts = txt_arr[scan].trim().split(/\s+/);
-    for (let p of parts) {
-        if (p.includes('<') || p.toUpperCase() === 'ND') continue;
-        const num = parseFloat(p);
-        if (!isNaN(num)) {
-            result = num;
-            break;
-        }
-    }
-    scan++;
-}
+            // Now scan forward for numeric result
+            let scan = k;
+            let result = undefined;
+
+            while (scan < txt_arr.length && result === undefined) {
+                const parts = txt_arr[scan].trim().split(/\s+/);
+                for (let p of parts) {
+                    if (!p || p.includes('<') || p.toUpperCase() === 'ND') continue;
+                    let num = parseFloat(p);
+                    if (!isNaN(num)) {
+                        result = num;
+                        break;
+                    }
+                }
+                scan++;
+            }
+
             if (result === undefined) {
-                console.log('Skipping invalid result (still undefined):', parts);
+                console.log('❌ Skipped: no valid numeric result for tag', tag);
                 continue;
             }
+
             if ((result >= 1 && result < 15) || (result > 0.001 && result < 0.015)) {
-                console.log('✅ Matched:', tag, result);
+                console.log('✅ MATCHED:', tag, result);
                 final_arr[1].push(tag);
                 final_arr[0].push(result.toFixed(2));
             }
