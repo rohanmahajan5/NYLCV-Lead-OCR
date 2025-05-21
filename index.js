@@ -780,31 +780,34 @@ if (cleanResult) {
     const sectionHeaders = ['analytical report', 'analysis report', 'results'];
     let currentTag = 'UNKNOWN';
 
-    // Reset final array structure
+    // Reset array structure for values and IDs
     final_arr = [[], []]; // [values, sampleIDs]
 
-    // Single pass processing
-    txt_arr.forEach((line) => {
-        // Update current sample tag
+    // Single pass processing with error handling
+    txt_arr.forEach((line, index) => {
+        // Update sample tag with proper capture group
         const sampleMatch = line.match(/Sample\s*Name:\s*(\S+)/i);
         if (sampleMatch) {
-            currentTag = sampleMatch;
+            currentTag = sampleMatch; // Fix: Use  to capture group
         }
 
-        // Check for lead results in relevant sections
-        if (sectionHeaders.some(header => line.toLowerCase().includes(header))) {
-            const leadMatch = line.match(/Lead,\s*Total\s+\d+\.?\d*\s+(\d+\.?\d*)\s+ug\/L/i);
-            if (leadMatch) {
-                const value = parseFloat(leadMatch);
-                
-                if (!isNaN(value) && value >= 1 && value <= 15) {
-                    console.log(`✅ CORRECT: ${currentTag} - ${value}`);
-                    final_arr.push(value.toFixed(2));
-                    final_arr.push(currentTag);
-                }
+        // Check for lead results without strict section dependency
+        const leadMatch = line.match(/Lead,\s*Total\s+\d+\.?\d*\s+(\d+\.?\d*)\s+U?\s*ug\/L/i);
+        if (leadMatch) {
+            const value = parseFloat(leadMatch);
+            
+            if (!isNaN(value) && value >= 1 && value <= 15) {
+                console.log(`✅ VALID: ${currentTag} - ${value}`);
+                final_arr.push(value.toFixed(2));
+                final_arr.push(currentTag);
             }
         }
     });
+
+    // Fallback check for empty results
+    if (final_arr.length === 0) {
+        console.warn("No valid lead results found in document structure");
+    }
 }
     if (type =='wsp') {
         
