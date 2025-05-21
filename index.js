@@ -777,19 +777,20 @@ if (cleanResult) {
         }
     }
     if (type === 'als') {
-    const leadRegex = /Lead,\s*Total\s+\S+\s+([\d.]+)\s+ug\/L/i;
+    const leadRegex = /Lead,\s*Total\s+.*?\s+([\d.]+)\s+ug\/L/i;
+    const tagRegex = /2023L-[\d.-]+/i;  // Fuzzy match on sample IDs
     let currentTag = null;
 
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // Capture Sample Name tag
-        const tagMatch = line.match(/Sample Name:\s*(\S+)/i);
+        // Capture Sample Tag (somewhere in line)
+        const tagMatch = line.match(tagRegex);
         if (tagMatch) {
-            currentTag = tagMatch[1];
+            currentTag = tagMatch[0];
         }
 
-        // Match lead result line (regardless of position)
+        // Match lead result line
         const leadMatch = line.match(leadRegex);
         if (leadMatch && currentTag) {
             const value = parseFloat(leadMatch[1]);
