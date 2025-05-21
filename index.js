@@ -777,17 +777,24 @@ if (cleanResult) {
         }
     }
     if (type === 'als') {
-    const leadRegex = /Lead,\s*Total\s+.*?\s+([\d.]+)\s+ug\/L/i;
-    const tagRegex = /2023L-[\d.-]+/i;  // Fuzzy match on sample IDs
+    const leadRegex = /^Lead,\s*Total\s+\S+\s+([\d.]+)\s+ug\/L/i;
     let currentTag = null;
+    let inResultsSection = false;
 
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // Capture Sample Tag (somewhere in line)
-        const tagMatch = line.match(tagRegex);
+        // Start processing only after results begin
+        if (!inResultsSection && line.match(/Sample Name:/i)) {
+            inResultsSection = true;
+        }
+
+        if (!inResultsSection) continue;
+
+        // Capture Sample Name tag
+        const tagMatch = line.match(/Sample Name:\s*(\S+)/i);
         if (tagMatch) {
-            currentTag = tagMatch[0];
+            currentTag = tagMatch[1];
         }
 
         // Match lead result line
@@ -795,10 +802,8 @@ if (cleanResult) {
         if (leadMatch && currentTag) {
             const value = parseFloat(leadMatch[1]);
 
-            if (
-                !isNaN(value) &&
-                ((value >= 1 && value <= 15) || (value > 0.001 && value < 0.015))
-            ) {
+            // Apply your condition filters
+            if (!isNaN(value) && ((value >= 1 && value <= 15) || (value > 0.001 && value < 0.015))) {
                 console.log(`✅ MATCHED: ${currentTag} - ${value}`);
                 final_arr[1].push(currentTag);
                 final_arr[0].push(value.toFixed(2));
