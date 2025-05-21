@@ -803,19 +803,22 @@ if (cleanResult) {
                 console.log('Skipping header line:', txt_arr[k]);
                 continue;
             }
+            // Start scanning forward for actual values
+let scan = k + 1;
+let result = undefined;
 
-            const leadLine = txt_arr[k] || '';
-            const parts = leadLine.trim().split(/\s+/);
-
-            let result = undefined;
-            for (let p of parts) {
-                if (p.includes('<') || p.toUpperCase() === 'ND') continue;
-                const num = parseFloat(p);
-                if (!isNaN(num)) {
-                    result = num;
-                    break;
-                }
-            }
+while (scan < txt_arr.length && result === undefined) {
+    const parts = txt_arr[scan].trim().split(/\s+/);
+    for (let p of parts) {
+        if (p.includes('<') || p.toUpperCase() === 'ND') continue;
+        const num = parseFloat(p);
+        if (!isNaN(num)) {
+            result = num;
+            break;
+        }
+    }
+    scan++;
+}
             if (result === undefined) {
                 console.log('Skipping invalid result (still undefined):', parts);
                 continue;
