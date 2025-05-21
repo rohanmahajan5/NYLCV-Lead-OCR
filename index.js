@@ -777,24 +777,31 @@ if (cleanResult) {
         }
     }
     if (type === 'als') {
-    const results = [];
-    let currentSample = '';
+    const sectionHeaders = ['analytical report', 'analysis report', 'results'];
+    let currentTag = 'UNKNOWN';
 
-    // First pass to map sample locations
-    txt_arr.forEach(line => {
+    // Reset final array structure
+    final_arr = [[], []]; // [values, sampleIDs]
+
+    // Single pass processing
+    txt_arr.forEach((line) => {
+        // Update current sample tag
         const sampleMatch = line.match(/Sample\s*Name:\s*(\S+)/i);
-        if (sampleMatch) currentSample = sampleMatch;
-    });
+        if (sampleMatch) {
+            currentTag = sampleMatch;
+        }
 
-    // Second pass for lead detection
-    txt_arr.forEach((line, index) => {
-        const leadMatch = line.match(/Lead,\s*Total\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+ug\/L/i);
-        if (leadMatch) {
-            const value = parseFloat(leadMatch); // Now capturing 2nd numeric value
-            if (value >= 1 && value <= 15) {
-                console.log(`✅ CORRECT: ${currentSample} - ${value}`);
-                final_arr.push(currentSample);
-                final_arr.push(value.toFixed(2));
+        // Check for lead results in relevant sections
+        if (sectionHeaders.some(header => line.toLowerCase().includes(header))) {
+            const leadMatch = line.match(/Lead,\s*Total\s+\d+\.?\d*\s+(\d+\.?\d*)\s+ug\/L/i);
+            if (leadMatch) {
+                const value = parseFloat(leadMatch);
+                
+                if (!isNaN(value) && value >= 1 && value <= 15) {
+                    console.log(`✅ CORRECT: ${currentTag} - ${value}`);
+                    final_arr.push(value.toFixed(2));
+                    final_arr.push(currentTag);
+                }
             }
         }
     });
