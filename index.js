@@ -776,43 +776,53 @@ if (cleanResult) {
             }
         }
     }
-    if (type =='als') {
-        
-        for (var i = 0; i < txt_arr.length; i++) {
-            var line = txt_arr[i];
-            var line_arr = line.split(' ').filter(String)
-            if (line != undefined && line.trim() === 'Analytical Report' || line.trim().toUpperCase() === 'ANALYTICAL RESULTS') {
-                var j = i;
-                while (txt_arr[j] != undefined && !(txt_arr[j].includes('Sample Name:') || txt_arr[j].includes('Sample ID:'))) {
-                    j++;
+    if (type === 'als') {
+    for (let i = 0; i < txt_arr.length; i++) {
+        let line = txt_arr[i]?.trim();
+        if (line === 'Analytical Report' || line.toUpperCase() === 'ANALYTICAL RESULTS') {
+            let j = i;
+            while (j < txt_arr.length && !(txt_arr[j].includes('Sample Name:') || txt_arr[j].includes('Sample ID:'))) {
+                j++;
+            }
+
+            let tagLine = txt_arr[j] || '';
+            let tagParts = tagLine.split(/\s+/);
+            let tag = tagParts.length > 2 ? tagParts[2] : 'UNKNOWN';
+
+            if (tag.includes('Method')) continue;
+
+            // Search for Lead line
+            let k = j;
+            while (k < txt_arr.length && !txt_arr[k].toLowerCase().includes('lead')) {
+                k++;
+            }
+
+            let resultLine = txt_arr[k] || '';
+            let resultParts = resultLine.trim().split(/\s+/);
+
+            // Safely extract first numeric result
+            let result = undefined;
+            for (let part of resultParts) {
+                if (!isNaN(part) && part.trim() !== '') {
+                    result = part;
+                    break;
                 }
-                var tag = txt_arr[j].split(' ')[2]
-                if ( !(tag.includes('Method'))) {
-                    var k = j;
-                    while ( txt_arr[k] != undefined && !(txt_arr[k].includes('Lead')) ) {
-                        k++;
-                    }
-                    var m = 0
-                  var m = 0;
-var result_arr = txt_arr[k].trim().split(/\s+/);
-while (isNaN(result_arr[m]) || m > 5 || result_arr[m] === 'ND') {
-    m++;
-}
-var result = result_arr[m];
-if (!result || typeof result !== 'string' || !result.trim() || result.includes('<') || result.includes('ND')) {
-  console.log('Skipping result:', result);
-  continue;
-}
-let value = parseFloat(result);
-if ((value > 1.00 && value < 15) || (value > 0.001 && value < 0.015)) {
-  console.log('PUSHING:', tag, value);
-  final_arr[1].push(tag);
-  final_arr[0].push(value);
-}
-                }
+            }
+
+            if (!result || result.includes('<') || result.includes('ND')) {
+                console.log('Skipping invalid result:', result);
+                continue;
+            }
+
+            let value = parseFloat(result);
+            if ((value >= 1.0 && value < 15)) {
+                console.log('PUSHING ALS:', tag, value);
+                final_arr[1].push(tag);
+                final_arr[0].push(value.toFixed(2));
             }
         }
     }
+}
     if (type =='wsp') {
         
         for (var i = 0; i < txt_arr.length; i++) {
