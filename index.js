@@ -777,37 +777,38 @@ if (cleanResult) {
         }
     }
     if (type === 'als') {
-    const leadRegex = /^Lead,\s*Total\s+\S+\s+([\d.]+)\s+ug\/L/i;
     let currentTag = null;
-    let inResultsSection = false;
+    let pendingLead = false;
 
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // Start processing only after results begin
-        if (!inResultsSection && line.match(/Sample Name:/i)) {
-            inResultsSection = true;
-        }
-
-        if (!inResultsSection) continue;
-
-        // Capture Sample Name tag
+        // Detect and save the current tag
         const tagMatch = line.match(/Sample Name:\s*(\S+)/i);
         if (tagMatch) {
             currentTag = tagMatch[1];
+            pendingLead = false; // reset lead flag
+            continue;
         }
 
-        // Match lead result line
-        const leadMatch = line.match(leadRegex);
-        if (leadMatch && currentTag) {
-            const value = parseFloat(leadMatch[1]);
+        // Detect Lead line — could be spread over multiple lines
+        if (/^Lead,\s*Total/i.test(line)) {
+            pendingLead = true;
+            continue;
+        }
 
-            // Apply your condition filters
-            if (!isNaN(value) && ((value >= 1 && value <= 15) || (value > 0.001 && value < 0.015))) {
-                console.log(`✅ MATCHED: ${currentTag} - ${value}`);
-                final_arr[1].push(currentTag);
-                final_arr[0].push(value.toFixed(2));
+        // If the next line after "Lead, Total" is a value, grab it
+        if (pendingLead) {
+            const valueMatch = line.match(/([\d.]+)\s*(ug\/L)?/i);
+            if (valueMatch) {
+                const value = parseFloat(valueMatch[1]);
+                if (!isNaN(value) && value >= 1 && value <= 15) {
+                    console.log(`✅ MATCHED: ${currentTag} - ${value}`);
+                    final_arr[1].push(currentTag || 'UNKNOWN');
+                    final_arr[0].push(value.toFixed(2));
+                }
             }
+            pendingLead = false; // Reset after capture
         }
     }
 }
