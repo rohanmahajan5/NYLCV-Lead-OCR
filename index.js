@@ -777,13 +777,13 @@ if (cleanResult) {
         }
     }
     if (type === 'als') {
-    const leadRegex = /^Lead,\s*Total\s+\S+\s+([\d.]+)\s+ug\/L/i;
+    const leadRegex = /Lead,\s*Total.*?([\d.]+)\s*(ug\/L|μg\/L)/i;
     let currentTag = null;
 
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // Update currentTag if a sample name is found
+        // Capture Sample Name tag
         const tagMatch = line.match(/Sample Name:\s*(\S+)/i);
         if (tagMatch) {
             currentTag = tagMatch[1];
@@ -794,13 +794,10 @@ if (cleanResult) {
         if (leadMatch && currentTag) {
             const value = parseFloat(leadMatch[1]);
 
-            if (
-                (!isNaN(value)) &&
-                ((value >= 1 && value <= 15) || (value > 0.001 && value < 0.015))
-            ) {
+            if (!isNaN(value) && ((value >= 1 && value <= 15) || (value > 0.001 && value < 0.015))) {
                 console.log(`✅ MATCHED: ${currentTag} - ${value}`);
-                final_arr[1].push(currentTag);        // TAG
-                final_arr[0].push(value.toFixed(2));   // VALUE
+                final_arr[1].push(currentTag);
+                final_arr[0].push(value.toFixed(2));
             }
         }
     }
