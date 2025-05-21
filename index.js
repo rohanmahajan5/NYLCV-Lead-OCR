@@ -778,36 +778,39 @@ if (cleanResult) {
     }
     if (type === 'als') {
     const sectionHeaders = ['analytical report', 'analysis report', 'results'];
+    const leadKeywords = ['lead, total', 'pb'];
     let currentTag = 'UNKNOWN';
 
-    // Reset array structure for values and IDs
-    final_arr = [[], []]; // [values, sampleIDs]
+    // Phase 1: Identify all sample tags first
+    txt_arr.forEach((line, i) => {
+        const sampleMatch = line.match(/(?:Sample\s*(?:ID|Name):\s*)(\S+)/i);
+        if (sampleMatch) currentTag = sampleMatch;
+    });
 
-    // Single pass processing with error handling
-    txt_arr.forEach((line, index) => {
-        // Update sample tag with proper capture group
-        const sampleMatch = line.match(/Sample\s*Name:\s*(\S+)/i);
-        if (sampleMatch) {
-            currentTag = sampleMatch; // Fix: Use  to capture group
-        }
-
-        // Check for lead results without strict section dependency
-        const leadMatch = line.match(/Lead,\s*Total\s+\d+\.?\d*\s+(\d+\.?\d*)\s+U?\s*ug\/L/i);
-        if (leadMatch) {
-            const value = parseFloat(leadMatch);
-            
-            if (!isNaN(value) && value >= 1 && value <= 15) {
-                console.log(`✅ VALID: ${currentTag} - ${value}`);
-                final_arr.push(value.toFixed(2));
-                final_arr.push(currentTag);
+    // Phase 2: Scan for lead results
+    txt_arr.forEach((line, i) => {
+        const cleanLine = line.toLowerCase().trim();
+        
+        // Detect relevant sections
+        if (sectionHeaders.some(header => cleanLine.includes(header))) {
+            let j = i;
+            while (j < txt_arr.length) {
+                // Look for lead lines with numeric results
+                const leadMatch = txt_arr[j].match(/Lead,\s*Total\s+[\d.]+\s+([\d.]+)/i);
+                if (leadMatch) {
+                    const value = parseFloat(leadMatch);
+                    
+                    if (!isNaN(value) && value >= 1 && value <= 15) {
+                        console.log(`✅ MATCHED: ${currentTag} - ${value}`);
+                        final_arr.push(currentTag);
+                        final_arr.push(value.toFixed(2));
+                    }
+                    break; // Found result, exit section scan
+                }
+                j++;
             }
         }
     });
-
-    // Fallback check for empty results
-    if (final_arr.length === 0) {
-        console.warn("No valid lead results found in document structure");
-    }
 }
     if (type =='wsp') {
         
