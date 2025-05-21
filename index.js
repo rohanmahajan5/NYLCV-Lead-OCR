@@ -781,44 +781,51 @@ if (cleanResult) {
         let line = txt_arr[i]?.trim();
         if (line === 'Analytical Report' || line.toUpperCase() === 'ANALYTICAL RESULTS') {
             let j = i;
+
+            // Find the sample name or ID
             while (j < txt_arr.length && !(txt_arr[j].includes('Sample Name:') || txt_arr[j].includes('Sample ID:'))) {
                 j++;
             }
+            const tagLine = txt_arr[j] || '';
+            const tagParts = tagLine.trim().split(/\s+/);
+            const tag = tagParts.length > 2 ? tagParts[2] : 'UNKNOWN';
+            
+            if (tag.toLowerCase().includes('method')) continue;
 
-            let tagLine = txt_arr[j] || '';
-            let tagParts = tagLine.split(/\s+/);
-            let tag = tagParts.length > 2 ? tagParts[2] : 'UNKNOWN';
-
-            if (tag.includes('Method')) continue;
-
-            // Search for Lead line
+            // Now find the "Lead" result line
             let k = j;
             while (k < txt_arr.length && !txt_arr[k].toLowerCase().includes('lead')) {
                 k++;
             }
 
-            let resultLine = txt_arr[k] || '';
-            let resultParts = resultLine.trim().split(/\s+/);
+            if (k >= txt_arr.length) {
+                console.log('No lead line found after tag:', tag);
+                continue;
+            }
 
-            // Safely extract first numeric result
+            const leadLine = txt_arr[k] || '';
+            const parts = leadLine.trim().split(/\s+/);
+
+            // Find the first clean numeric value
             let result = undefined;
-            for (let part of resultParts) {
-                if (!isNaN(part) && part.trim() !== '') {
-                    result = part;
+            for (let p of parts) {
+                if (p.includes('<') || p.toUpperCase() === 'ND') continue;
+                const num = parseFloat(p);
+                if (!isNaN(num)) {
+                    result = num;
                     break;
                 }
             }
 
-            if (!result || result.includes('<') || result.includes('ND')) {
-                console.log('Skipping invalid result:', result);
+            if (result === undefined) {
+                console.log('Skipping invalid result (still undefined):', parts);
                 continue;
             }
 
-            let value = parseFloat(result);
-            if ((value >= 1.0 && value < 15)) {
-                console.log('PUSHING ALS:', tag, value);
+            if ((result >= 1 && result < 15) || (result > 0.001 && result < 0.015)) {
+                console.log('✅ Matched:', tag, result);
                 final_arr[1].push(tag);
-                final_arr[0].push(value.toFixed(2));
+                final_arr[0].push(result.toFixed(2));
             }
         }
     }
