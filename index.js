@@ -777,38 +777,31 @@ if (cleanResult) {
         }
     }
     if (type === 'als') {
+    const leadRegex = /^Lead,\s*Total\s+\S+\s+([\d.]+)\s+ug\/L/i;
     let currentTag = null;
-    let pendingLead = false;
 
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // Detect and save the current tag
+        // Update currentTag if a sample name is found
         const tagMatch = line.match(/Sample Name:\s*(\S+)/i);
         if (tagMatch) {
             currentTag = tagMatch[1];
-            pendingLead = false; // reset lead flag
-            continue;
         }
 
-        // Detect Lead line — could be spread over multiple lines
-        if (/^Lead,\s*Total/i.test(line)) {
-            pendingLead = true;
-            continue;
-        }
+        // Match lead result line
+        const leadMatch = line.match(leadRegex);
+        if (leadMatch && currentTag) {
+            const value = parseFloat(leadMatch[1]);
 
-        // If the next line after "Lead, Total" is a value, grab it
-        if (pendingLead) {
-            const valueMatch = line.match(/([\d.]+)\s*(ug\/L)?/i);
-            if (valueMatch) {
-                const value = parseFloat(valueMatch[1]);
-                if (!isNaN(value) && value >= 1 && value <= 15) {
-                    console.log(`✅ MATCHED: ${currentTag} - ${value}`);
-                    final_arr[1].push(currentTag || 'UNKNOWN');
-                    final_arr[0].push(value.toFixed(2));
-                }
+            if (
+                (!isNaN(value)) &&
+                ((value >= 1 && value <= 15) || (value > 0.001 && value < 0.015))
+            ) {
+                console.log(`✅ MATCHED: ${currentTag} - ${value}`);
+                final_arr[1].push(currentTag);        // TAG
+                final_arr[0].push(value.toFixed(2));   // VALUE
             }
-            pendingLead = false; // Reset after capture
         }
     }
 }
