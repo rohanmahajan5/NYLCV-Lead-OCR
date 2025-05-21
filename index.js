@@ -777,37 +777,24 @@ if (cleanResult) {
         }
     }
     if (type === 'als') {
-    const sectionHeaders = ['analytical report', 'analysis report', 'results'];
-    const leadKeywords = ['lead, total', 'pb'];
-    let currentTag = 'UNKNOWN';
+    const results = [];
+    let currentSample = '';
 
-    // Phase 1: Identify all sample tags first
-    txt_arr.forEach((line, i) => {
-        const sampleMatch = line.match(/(?:Sample\s*(?:ID|Name):\s*)(\S+)/i);
-        if (sampleMatch) currentTag = sampleMatch;
+    // First pass to map sample locations
+    txt_arr.forEach(line => {
+        const sampleMatch = line.match(/Sample\s*Name:\s*(\S+)/i);
+        if (sampleMatch) currentSample = sampleMatch;
     });
 
-    // Phase 2: Scan for lead results
-    txt_arr.forEach((line, i) => {
-        const cleanLine = line.toLowerCase().trim();
-        
-        // Detect relevant sections
-        if (sectionHeaders.some(header => cleanLine.includes(header))) {
-            let j = i;
-            while (j < txt_arr.length) {
-                // Look for lead lines with numeric results
-                const leadMatch = txt_arr[j].match(/Lead,\s*Total\s+[\d.]+\s+([\d.]+)/i);
-                if (leadMatch) {
-                    const value = parseFloat(leadMatch);
-                    
-                    if (!isNaN(value) && value >= 1 && value <= 15) {
-                        console.log(`✅ MATCHED: ${currentTag} - ${value}`);
-                        final_arr.push(currentTag);
-                        final_arr.push(value.toFixed(2));
-                    }
-                    break; // Found result, exit section scan
-                }
-                j++;
+    // Second pass for lead detection
+    txt_arr.forEach((line, index) => {
+        const leadMatch = line.match(/Lead,\s*Total\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+ug\/L/i);
+        if (leadMatch) {
+            const value = parseFloat(leadMatch); // Now capturing 2nd numeric value
+            if (value >= 1 && value <= 15) {
+                console.log(`✅ CORRECT: ${currentSample} - ${value}`);
+                final_arr.push(currentSample);
+                final_arr.push(value.toFixed(2));
             }
         }
     });
