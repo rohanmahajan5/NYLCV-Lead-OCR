@@ -777,64 +777,40 @@ if (cleanResult) {
         }
     }
     if (type === 'als') {
-    for (let i = 0; i < txt_arr.length; i++) {
-        let line = txt_arr[i]?.trim();
+    const sectionHeaders = ['analytical report', 'analysis report', 'results'];
+    const leadKeywords = ['lead, total', 'pb'];
+    let currentTag = 'UNKNOWN';
 
-        if (line === 'Analytical Report' || line.toUpperCase() === 'ANALYTICAL RESULTS') {
+    // Phase 1: Identify all sample tags first
+    txt_arr.forEach((line, i) => {
+        const sampleMatch = line.match(/(?:Sample\s*(?:ID|Name):\s*)(\S+)/i);
+        if (sampleMatch) currentTag = sampleMatch;
+    });
+
+    // Phase 2: Scan for lead results
+    txt_arr.forEach((line, i) => {
+        const cleanLine = line.toLowerCase().trim();
+        
+        // Detect relevant sections
+        if (sectionHeaders.some(header => cleanLine.includes(header))) {
             let j = i;
-
-            while (j < txt_arr.length && !(txt_arr[j].includes('Sample Name:') || txt_arr[j].includes('Sample ID:'))) {
+            while (j < txt_arr.length) {
+                // Look for lead lines with numeric results
+                const leadMatch = txt_arr[j].match(/Lead,\s*Total\s+[\d.]+\s+([\d.]+)/i);
+                if (leadMatch) {
+                    const value = parseFloat(leadMatch);
+                    
+                    if (!isNaN(value) && value >= 1 && value <= 15) {
+                        console.log(`✅ MATCHED: ${currentTag} - ${value}`);
+                        final_arr.push(currentTag);
+                        final_arr.push(value.toFixed(2));
+                    }
+                    break; // Found result, exit section scan
+                }
                 j++;
             }
-
-            let tagLine = txt_arr[j] || '';
-            let tagParts = tagLine.trim().split(/\s+/);
-            let tag = tagParts.length > 2 ? tagParts[2] : 'UNKNOWN';
-
-            if (tag.toLowerCase().includes('method')) continue;
-
-            let k = j;
-            while (k < txt_arr.length && !txt_arr[k].toLowerCase().includes('lead')) {
-                k++;
-            }
-
-            // Skip if we never find the Lead line
-            if (k >= txt_arr.length) continue;
-
-            if (txt_arr[k].toLowerCase().includes('total') || txt_arr[k].toLowerCase().includes('lead,')) {
-                console.log('Skipping header line:', txt_arr[k]);
-                k++; // move forward
-            }
-
-            // Now scan forward for numeric result
-            let scan = k;
-            let result = undefined;
-
-            while (scan < txt_arr.length && result === undefined) {
-                const parts = txt_arr[scan].trim().split(/\s+/);
-                for (let p of parts) {
-                    if (!p || p.includes('<') || p.toUpperCase() === 'ND') continue;
-                    let num = parseFloat(p);
-                    if (!isNaN(num)) {
-                        result = num;
-                        break;
-                    }
-                }
-                scan++;
-            }
-
-            if (result === undefined) {
-                console.log('❌ Skipped: no valid numeric result for tag', tag);
-                continue;
-            }
-
-            if ((result >= 1 && result < 15) || (result > 0.001 && result < 0.015)) {
-                console.log('✅ MATCHED:', tag, result);
-                final_arr[1].push(tag);
-                final_arr[0].push(result.toFixed(2));
-            }
         }
-    }
+    });
 }
     if (type =='wsp') {
         
