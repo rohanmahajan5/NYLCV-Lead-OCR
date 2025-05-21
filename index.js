@@ -777,7 +777,7 @@ if (cleanResult) {
         }
     }
     if (type === 'als') {
-    const leadRegex = /^Lead,\s*Total\s+\S+\s+([\d.]+)\s+ug\/L/i;
+    const leadRegex = /Lead,\s*Total\s+\S+\s+([\d.]+)\s+ug\/L/i;
     let currentTag = null;
 
     for (let i = 0; i < txt_arr.length; i++) {
@@ -789,14 +789,13 @@ if (cleanResult) {
             currentTag = tagMatch[1];
         }
 
-        // Match lead result line
+        // Match lead result line (regardless of position)
         const leadMatch = line.match(leadRegex);
         if (leadMatch && currentTag) {
             const value = parseFloat(leadMatch[1]);
 
-            // Apply your condition filters
             if (
-                (!isNaN(value)) &&
+                !isNaN(value) &&
                 ((value >= 1 && value <= 15) || (value > 0.001 && value < 0.015))
             ) {
                 console.log(`✅ MATCHED: ${currentTag} - ${value}`);
