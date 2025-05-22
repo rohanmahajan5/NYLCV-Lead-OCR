@@ -421,31 +421,37 @@ if (cleanResult) {
             }
         }
     }
-    if (type =='emsl') {
-        for (var i = 0; i < txt_arr.length; i++) {
-            var line = txt_arr[i];
-            var line_arr = line.split(' ').filter(String)
-            // Look for the LabID
-            //line_arr.splice(0,)
-            console.log(line_arr)
-            if (line.includes('Client Sample Description')) {
-                line_arr.splice(0, 3)
-                var tag = line_arr[0];
-                //finding result line
-                var j = i;
-                while ( !(txt_arr[j].split(' ')[1] === 'Lead') ) {
-                    j++;
-                }
-                var result = txt_arr[j].split(' ')[2];
-                
-                if (!(result.includes('<') || result.includes('ND')) && parseFloat(result) < 15 &&
-                    !(final_arr[1].includes(tag)) ) {
-                    final_arr[0].push(result);
-                    final_arr[1].push(tag); 
-                }
+    if (type === 'emsl') {
+    let currentTag = null;
+
+    for (let i = 0; i < txt_arr.length; i++) {
+        const line = txt_arr[i].trim();
+
+        // Detect and capture the sample tag
+        const tagMatch = line.match(/^Sample:\s+(HAUP-\d+)/);
+        if (tagMatch) {
+            currentTag = tagMatch[1];
+        }
+
+        // Match the line containing lead result
+        const leadMatch = line.match(/^Lead\s+([<]?\d+\.?\d*)\s+/);
+        if (leadMatch && currentTag) {
+            const rawValue = leadMatch[1];
+
+            // Skip <1.0 or ND values
+            if (rawValue.includes('<') || rawValue.toUpperCase().includes('ND')) continue;
+
+            const value = parseFloat(rawValue);
+            if (!isNaN(value) && value >= 1 && value <= 15) {
+                final_arr[0].push(value.toFixed(1));
+                final_arr[1].push(currentTag);
             }
+
+            // Reset after storing
+            currentTag = null;
         }
     }
+}
     if (type === 'jcbroderick') {
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i];
