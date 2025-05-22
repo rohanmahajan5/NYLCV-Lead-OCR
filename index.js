@@ -442,7 +442,7 @@ if (cleanResult) {
             if (rawValue.includes('<') || rawValue.toUpperCase().includes('ND')) continue;
 
             const value = parseFloat(rawValue);
-            if (!isNaN(value) && value >= 1 && value <= 15) {
+            if (!isNaN(value) && value >= 1 && value <= 5) {
                 final_arr[0].push(value.toFixed(1));
                 final_arr[1].push(currentTag);
             }
