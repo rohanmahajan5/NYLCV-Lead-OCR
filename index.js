@@ -447,21 +447,29 @@ if (cleanResult) {
         }
     }
     if (type === 'jcbroderick') {
+    let code = (window.prompt('Outlet Code (e.g., HAUP, PINES, etc.)')).toUpperCase();
     for (let i = 0; i < txt_arr.length; i++) {
-        const line = txt_arr[i].trim();
-        const regex = /^(.+?)\s{2,}(\d{1,2}\/\d{1,2}\/\d{2,4})\s{2,}([\d.]+)$/;
+        let line = txt_arr[i].trim();
 
-        const match = line.match(regex);
-        if (match) {
-            const location = match[1].trim();
-            const date = match[2].trim();
-            const result = parseFloat(match[3]);
+        // Skip lines that don’t contain relevant tags or numbers
+        if (!line.includes(code)) continue;
 
-            // Only keep valid results within 1–15 ppb range
-            if (!isNaN(result) && result >= 1 && result <= 15) {
-                console.log(`✅ ${location} (${date}): ${result} ppb`);
-                final_arr[0].push(result.toFixed(2));
-                final_arr[1].push(location.toUpperCase());
+        let lineArr = line.split(/\s+/);
+        let outletTag = lineArr[0];  // Typically starts with HAUP- or similar
+
+        // Look for numeric result at the end
+        for (let j = lineArr.length - 1; j >= 0; j--) {
+            let valueStr = lineArr[j];
+            let value = parseFloat(valueStr);
+
+            if (!isNaN(value)) {
+                // We found a number, check the valid range
+                if (value >= 1 && value <= 15) {
+                    console.log(`✅ Found: ${outletTag} - ${value}`);
+                    final_arr[0].push(value.toFixed(2));
+                    final_arr[1].push(outletTag);
+                }
+                break; // stop after finding the first numeric match
             }
         }
     }
