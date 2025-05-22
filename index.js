@@ -446,25 +446,26 @@ if (cleanResult) {
             }
         }
     }
-    if (type =='jcbroderick') {
-        var code = (window.prompt('Outlet Code (the first ~4 letters of every appliance code)')).toUpperCase();//document.getElementById('code');
-        for (var i = 0; i < txt_arr.length; i++) {
-            var line = txt_arr[i];
-            var line_arr = line.toUpperCase().split(' ').filter(String)
-            if (line_arr[0] != undefined && line_arr[0].includes(code)) {
-                console.log(line_arr)
-                var tag = line_arr[0]
-                var j = line_arr[line_arr.length-1]
-                for (var j = line_arr.length-1; parseFloat(line_arr[j]).toString() !== line_arr[j] && j > 0; j--) {
-                    j += 0
-                }
-                if (j != 0 && parseFloat(line_arr[j]) < 1000 && parseFloat(line_arr[j]) > 1.00 && parseFloat(line_arr[j]) < 15) {
-                    final_arr[0].push(line_arr[j]);
-                    final_arr[1].push(tag); 
-                }
+    if (type === 'jcbroderick') {
+    for (let i = 0; i < txt_arr.length; i++) {
+        const line = txt_arr[i].trim();
+        const regex = /^(.+?)\s{2,}(\d{1,2}\/\d{1,2}\/\d{2,4})\s{2,}([\d.]+)$/;
+
+        const match = line.match(regex);
+        if (match) {
+            const location = match[1].trim();
+            const date = match[2].trim();
+            const result = parseFloat(match[3]);
+
+            // Only keep valid results within 1–15 ppb range
+            if (!isNaN(result) && result >= 1 && result <= 15) {
+                console.log(`✅ ${location} (${date}): ${result} ppb`);
+                final_arr[0].push(result.toFixed(2));
+                final_arr[1].push(location.toUpperCase());
             }
         }
     }
+}
     if (type =='microbac') {
         for (var i = 0; i < txt_arr.length; i++) {
             var line = txt_arr[i];
