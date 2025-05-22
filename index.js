@@ -448,31 +448,33 @@ if (cleanResult) {
     }
     if (type === 'jcbroderick') {
     for (let i = 0; i < txt_arr.length; i++) {
-        const line = txt_arr[i].trim();
-        
-        // Skip empty lines
-        if (!line) continue;
+        const line = txt_arr[i];
 
-        // Match lines containing a sample code and a result
-        const match = line.match(/(HAUP-\d{4})[\s\S]*?(\d{1,3}\.\d{1,2}|<1\.00|<1|ND|OOS)/i);
-        
-        if (match) {
-            const tag = match[1];
-            let result = match[2];
+        // Match sample codes like HAUP-1121, SMIT-0903 etc.
+        const sampleMatch = line.match(/\b[A-Z]{4}-\d+\b/);
+        if (!sampleMatch) continue;
 
-            // Skip invalid results
-            if (result === 'OOS' || result === 'ND' || result.includes('<1')) continue;
+        const sampleCode = sampleMatch[0];
+        let result = null;
 
-            // Sanitize and parse result
-            result = parseFloat(result);
-            if (isNaN(result)) continue;
-
-            // Optional range filtering
-            if (result >= 1 && result < 15) {
-                final_arr[0].push(result.toFixed(2));
-                final_arr[1].push(tag);
+        // Search forward a few lines for "Initial Result (ppb)"
+        for (let j = i; j < i + 8 && j < txt_arr.length; j++) {
+            const resultMatch = txt_arr[j].match(/Initial Result\s*\(ppb\)[^\d<]*([\d.]+)/i);
+            if (resultMatch) {
+                const parsed = parseFloat(resultMatch[1]);
+                if (!isNaN(parsed)) {
+                    result = parsed;
+                    break;
+                }
             }
         }
+
+        // Skip if no result or outside the range
+        if (result === null || result < 1 || result >= 15) continue;
+
+        // Push formatted result and tag
+        final_arr[1].push(sampleCode);
+        final_arr[0].push(result.toFixed(2));
     }
 }
     if (type =='microbac') {
