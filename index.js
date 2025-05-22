@@ -222,14 +222,14 @@ if (cleanResult) {
     result = parseFloat(cleanResult[1]);
 
     // ⚠️ Skip values outside desired range
-    if (result < 1 || result >= 15) {
+    if (result < 1 || result >= 5) {
         continue;
     }
 } else {
     continue;
 }
                 var tag = line_arr.join('').replace("INITIAL","").replace(";","")
-                if (result < 15) {
+                if (result < 5) {
                     if (flagged) {
                         result = "<span style='color:#f7c12d;'>"+result+"</span>"
                         tag = "<span style='color:#f7c12d;'>"+tag+"</span>"
