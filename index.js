@@ -375,7 +375,6 @@ if (cleanResult) {
         }
     }
     if (type =='pace-analytical') {
-       if (type === 'pace-summary') {
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
         const match = line.match(/^(\d{2}A\d{4}-\d+)\s+\[(.*?)\]\s+B\d+\s+([\d.]+)\s+[\d.]+\s+\d{2}\/\d{2}\/\d{2}$/);
