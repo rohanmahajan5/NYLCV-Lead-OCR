@@ -427,19 +427,31 @@ if (cleanResult) {
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // Primary pattern: Sample:  MS-10/... or HAUP-123
-        const sampleMatch = line.match(/^Sample:\s+(MS-\S+|HAUP-\d+|LV-\d+)/);
-        if (sampleMatch) {
-            currentTag = sampleMatch[1];
+        // Format A: JC Broderick line-by-line structure
+        const leadLineMatch = line.match(/^(LV-\d+|HAUP-\d+|MS-\S+).*?Lead\s+([<]?\d+\.?\d*)/);
+        if (leadLineMatch) {
+            const tag = leadLineMatch[1];
+            const raw = leadLineMatch[2];
+            if (raw.includes('<') || raw.toUpperCase().includes('ND')) continue;
+
+            const value = parseFloat(raw);
+            if (!isNaN(value) && value >= 1 && value <= 5) {
+                final_arr[0].push(value.toFixed(1));
+                final_arr[1].push(tag);
+            }
             continue;
         }
 
-        // Lead line pattern (general EMSL pattern)
-        const leadMatch = line.match(/^Lead\s+([<]?\d+(\.\d+)?)/);
-        if (leadMatch && currentTag) {
-            let raw = leadMatch[1];
+        // Format B: Paragraph style with separated Sample/Lead lines
+        const tagMatch = line.match(/^Sample:\s+(LV-\d+|HAUP-\d+|MS-\S+)/);
+        if (tagMatch) {
+            currentTag = tagMatch[1];
+            continue;
+        }
 
-            // Ignore nondetects
+        const leadMatch = line.match(/^Lead\s+([<]?\d+\.?\d*)/);
+        if (leadMatch && currentTag) {
+            const raw = leadMatch[1];
             if (raw.includes('<') || raw.toUpperCase().includes('ND')) {
                 currentTag = null;
                 continue;
@@ -451,7 +463,7 @@ if (cleanResult) {
                 final_arr[1].push(currentTag);
             }
 
-            currentTag = null; // Reset after match
+            currentTag = null; // reset after pairing
         }
     }
 }
