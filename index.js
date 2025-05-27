@@ -375,28 +375,22 @@ if (cleanResult) {
         }
     }
     if (type =='pace-analytical') {
-        for (var i = 0; i < txt_arr.length; i++) {
-            var line = txt_arr[i];
-            var line_arr = line.split(' ').filter(String)
-            // Look for the LabID
-            //line_arr.splice(0,)
-            if (line_arr.includes('Lab') && line_arr.includes('ID:')) {
-                line_arr.splice(0, 1)
-                var tag = line_arr.slice(0, line_arr.indexOf('Lab')).join();
-                //finding result line
-                var j = i;
-                while ( !(txt_arr[j].split(' ')[0] === 'Lead') ) {
-                    j++;
-                }
-                var result = txt_arr[j].split(' ')[1];
-                if ( result.includes('§') || // common OCR error
-                (!(result.includes('<')) && parseFloat(result) < 15) ) {
-                    final_arr[0].push(result);
-                    final_arr[1].push(tag); 
-                }
+       if (type === 'pace-summary') {
+    for (let i = 0; i < txt_arr.length; i++) {
+        const line = txt_arr[i].trim();
+        const match = line.match(/^(\d{2}A\d{4}-\d+)\s+\[(.*?)\]\s+B\d+\s+([\d.]+)\s+[\d.]+\s+\d{2}\/\d{2}\/\d{2}$/);
+        if (match) {
+            const sampleId = match[1]; // e.g., 25A1559-15
+            const location = match[2]; // e.g., CRE 214
+            const result = parseFloat(match[3]); // e.g., 5.00
+
+            if (!isNaN(result) && result >= 1 && result <= 5) {
+                final_arr[0].push(result.toFixed(2));
+                final_arr[1].push(`${sampleId} ${location}`);
             }
         }
     }
+}
     if (type =='pace-laboratory') {
         for (var i = 0; i < txt_arr.length; i++) {
             var line = txt_arr[i];
