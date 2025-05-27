@@ -397,7 +397,7 @@ if (cleanResult) {
             const parts = line.split(/\s+/);
             const result = parseFloat(parts[1]);
 
-            if (!isNaN(result) && result >= 1 && result <= 15 && currentTag && currentLoc) {
+            if (!isNaN(result) && result >= 1 && result <= 5 && currentTag && currentLoc) {
                 final_arr[0].push(result.toFixed(2));
                 final_arr[1].push(`${currentTag} ${currentLoc}`);
                 currentTag = null;
