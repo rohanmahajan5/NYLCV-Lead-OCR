@@ -422,33 +422,34 @@ if (cleanResult) {
         }
     }
     if (type === 'emsl') {
+    let foundAny = final_arr[0].length > 0; // did main EMSL code add anything?
     let currentTag = null;
 
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // Detect and capture the sample tag
-        const tagMatch = line.match(/^Sample:\s+(HAUP-\d+)/);
-        if (tagMatch) {
-            currentTag = tagMatch[1];
+        // Catch format: Sample: LV-001 or HAUP-0022 etc.
+        const sampleMatch = line.match(/^Sample:\s+(LV-\d+|HAUP-\d+)/);
+        if (sampleMatch) {
+            currentTag = sampleMatch[1];
         }
 
-        // Match the line containing lead result
-        const leadMatch = line.match(/^Lead\s+([<]?\d+\.?\d*)\s+/);
-        if (leadMatch && currentTag) {
-            const rawValue = leadMatch[1];
+        // If we see a Lead line after a Sample line, extract it
+        if (!foundAny && currentTag && line.startsWith("Lead")) {
+            const resultMatch = line.match(/^Lead\s+([<]?\d+\.?\d*)/);
+            if (resultMatch) {
+                const raw = resultMatch[1];
 
-            // Skip <1.0 or ND values
-            if (rawValue.includes('<') || rawValue.toUpperCase().includes('ND')) continue;
+                if (raw.includes('<') || raw.toUpperCase().includes('ND')) continue;
 
-            const value = parseFloat(rawValue);
-            if (!isNaN(value) && value >= 1 && value <= 5) {
-                final_arr[0].push(value.toFixed(1));
-                final_arr[1].push(currentTag);
+                const value = parseFloat(raw);
+                if (!isNaN(value) && value >= 1 && value <= 5) {
+                    final_arr[0].push(value.toFixed(1));
+                    final_arr[1].push(currentTag);
+                }
+
+                currentTag = null; // reset
             }
-
-            // Reset after storing
-            currentTag = null;
         }
     }
 }
