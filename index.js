@@ -422,34 +422,29 @@ if (cleanResult) {
         }
     }
     if (type === 'emsl') {
-    let foundAny = final_arr[0].length > 0; // did main EMSL code add anything?
     let currentTag = null;
 
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // Catch format: Sample: LV-001 or HAUP-0022 etc.
-        const sampleMatch = line.match(/^Sample:\s+(LV-\d+|HAUP-\d+)/);
-        if (sampleMatch) {
-            currentTag = sampleMatch[1];
+        // Try format 1 — "Sample: [Tag]"
+        const tagMatch = line.match(/^Sample:\s+(CC-\d{2}\/[A-Za-z0-9\s#()]+)\s+/);
+        if (tagMatch) {
+            currentTag = tagMatch[1];
         }
 
-        // If we see a Lead line after a Sample line, extract it
-        if (!foundAny && currentTag && line.startsWith("Lead")) {
-            const resultMatch = line.match(/^Lead\s+([<]?\d+\.?\d*)/);
-            if (resultMatch) {
-                const raw = resultMatch[1];
-
-                if (raw.includes('<') || raw.toUpperCase().includes('ND')) continue;
-
-                const value = parseFloat(raw);
+        // Try format 2 — "Lead [value]..."
+        const leadMatch = line.match(/^Lead\s+([<]?\d+\.?\d*)\s+/i);
+        if (leadMatch && currentTag) {
+            const valueStr = leadMatch[1];
+            if (!valueStr.includes('<') && !valueStr.toUpperCase().includes('ND')) {
+                const value = parseFloat(valueStr);
                 if (!isNaN(value) && value >= 1 && value <= 5) {
-                    final_arr[0].push(value.toFixed(1));
+                    final_arr[0].push(value.toFixed(2));
                     final_arr[1].push(currentTag);
                 }
-
-                currentTag = null; // reset
             }
+            currentTag = null; // Reset for next sample block
         }
     }
 }
