@@ -374,18 +374,34 @@ if (cleanResult) {
             }
         }
     }
-    if (type =='pace-analytical') {
+    if (type === 'pace-analytical') {
+    let currentTag = null;
+    let currentLoc = null;
+
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
-        const match = line.match(/^(\d{2}A\d{4}-\d+)\s+\[(.*?)\]\s+B\d+\s+([\d.]+)\s+[\d.]+\s+\d{2}\/\d{2}\/\d{2}$/);
-        if (match) {
-            const sampleId = match[1]; // e.g., 25A1559-15
-            const location = match[2]; // e.g., CRE 214
-            const result = parseFloat(match[3]); // e.g., 5.00
 
-            if (!isNaN(result) && result >= 1 && result <= 5) {
+        // Match sample ID and location (multi-line style)
+        const idMatch = line.match(/^Sample ID:\s*(\S+)/);
+        if (idMatch) {
+            currentTag = idMatch[1];
+        }
+
+        const locMatch = line.match(/^Field Sample #:\s*(.+)/);
+        if (locMatch) {
+            currentLoc = locMatch[1].trim();
+        }
+
+        // Match lead result
+        if (line.startsWith('Lead')) {
+            const parts = line.split(/\s+/);
+            const result = parseFloat(parts[1]);
+
+            if (!isNaN(result) && result >= 1 && result <= 15 && currentTag && currentLoc) {
                 final_arr[0].push(result.toFixed(2));
-                final_arr[1].push(`${sampleId} ${location}`);
+                final_arr[1].push(`${currentTag} ${currentLoc}`);
+                currentTag = null;
+                currentLoc = null;
             }
         }
     }
