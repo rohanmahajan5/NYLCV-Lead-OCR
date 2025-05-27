@@ -423,43 +423,35 @@ if (cleanResult) {
     }
     if (type === 'emsl') {
     let currentTag = null;
-    let foundAny = final_arr[0].length > 0;
 
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // For Clarence/paragraph style
-        const tagMatch = line.match(/^Sample:\s+(LV-\d+|HAUP-\d+)/);
-        if (tagMatch) currentTag = tagMatch[1];
-
-        if (!foundAny && currentTag && line.startsWith("Lead")) {
-            const resultMatch = line.match(/^Lead\s+([<]?\d+\.?\d*)/);
-            if (resultMatch) {
-                const raw = resultMatch[1];
-                if (raw.includes('<') || raw.toUpperCase().includes('ND')) continue;
-
-                const value = parseFloat(raw);
-                if (!isNaN(value) && value >= 1 && value <= 5) {
-                    final_arr[0].push(value.toFixed(1));
-                    final_arr[1].push(currentTag);
-                }
-
-                currentTag = null;
-            }
+        // Primary pattern: Sample:  MS-10/... or HAUP-123
+        const sampleMatch = line.match(/^Sample:\s+(MS-\S+|HAUP-\d+|LV-\d+)/);
+        if (sampleMatch) {
+            currentTag = sampleMatch[1];
+            continue;
         }
 
-        // ➕ NEW: For JC Broderick EMSL line-by-line structure
-        const leadLineMatch = line.match(/^(HAUP-\d+).*?Lead\s+([<]?\d+\.?\d*)/);
-        if (leadLineMatch) {
-            const tag = leadLineMatch[1];
-            const raw = leadLineMatch[2];
-            if (raw.includes('<') || raw.toUpperCase().includes('ND')) continue;
+        // Lead line pattern (general EMSL pattern)
+        const leadMatch = line.match(/^Lead\s+([<]?\d+(\.\d+)?)/);
+        if (leadMatch && currentTag) {
+            let raw = leadMatch[1];
+
+            // Ignore nondetects
+            if (raw.includes('<') || raw.toUpperCase().includes('ND')) {
+                currentTag = null;
+                continue;
+            }
 
             const value = parseFloat(raw);
             if (!isNaN(value) && value >= 1 && value <= 5) {
                 final_arr[0].push(value.toFixed(1));
-                final_arr[1].push(tag);
+                final_arr[1].push(currentTag);
             }
+
+            currentTag = null; // Reset after match
         }
     }
 }
