@@ -427,55 +427,39 @@ if (cleanResult) {
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // 📄 FORMAT 1: Paragraph style ("Sample: HAUP-0001", then "Lead 5.1 ug/L")
-        const tagMatch = line.match(/^Sample:\s+(LV-\d+|HAUP-\d+)/i);
+        // 🟢 Match sample tag: "Sample: CC-XX..." or "Sample: HAUP-XXXX"
+        const tagMatch = line.match(/^Sample:\s+([A-Z]+-\d+)/i);
         if (tagMatch) {
             currentTag = tagMatch[1];
             continue;
         }
 
-        if (currentTag && line.startsWith("Lead")) {
-            const resultMatch = line.match(/^Lead\s+([<]?\d+\.?\d*)/i);
-            if (resultMatch) {
-                const raw = resultMatch[1];
-                if (!raw.includes('<') && !raw.toUpperCase().includes('ND')) {
-                    const value = parseFloat(raw);
-                    if (!isNaN(value) && value >= 1 && value <= 5) {
-                        final_arr[0].push(value.toFixed(1));
-                        final_arr[1].push(currentTag);
-                    }
-                }
+        // 🟢 Paragraph format: "Lead 3.49 ..."
+        const leadLineMatch = line.match(/^Lead\s+([<]?\d+\.?\d*)/i);
+        if (leadLineMatch && currentTag) {
+            const raw = leadLineMatch[1];
+            if (raw.includes('<') || raw.toUpperCase().includes('ND')) continue;
+
+            const value = parseFloat(raw);
+            if (!isNaN(value) && value >= 1 && value <= 5) {
+                final_arr[0].push(value.toFixed(2));
+                final_arr[1].push(currentTag);
             }
-            currentTag = null;
+            currentTag = null; // Reset after storing
             continue;
         }
 
-        // 📄 FORMAT 2: JC Broderick EMSL ("HAUP-001 Lead 4.3 ug/L")
-        const inlineMatch = line.match(/^(HAUP-\d+).*?Lead\s+([<]?\d+\.?\d*)/i);
+        // 🟢 Inline format: "HAUP-1234 ... Lead 4.2"
+        const inlineMatch = line.match(/^([A-Z]+-\d+).*?Lead\s+([<]?\d+\.?\d*)/i);
         if (inlineMatch) {
             const tag = inlineMatch[1];
             const raw = inlineMatch[2];
-            if (!raw.includes('<') && !raw.toUpperCase().includes('ND')) {
-                const value = parseFloat(raw);
-                if (!isNaN(value) && value >= 1 && value <= 5) {
-                    final_arr[0].push(value.toFixed(1));
-                    final_arr[1].push(tag);
-                }
-            }
-            continue;
-        }
+            if (raw.includes('<') || raw.toUpperCase().includes('ND')) continue;
 
-        // 📄 FORMAT 3: Tabular EMSL results with "Client Sample Description" and "Lead"
-        const tabularMatch = line.match(/^(LV-\d+|HAUP-\d+).+?\s+Lead\s+([<]?\d+\.?\d*)/i);
-        if (tabularMatch) {
-            const tag = tabularMatch[1];
-            const raw = tabularMatch[2];
-            if (!raw.includes('<') && !raw.toUpperCase().includes('ND')) {
-                const value = parseFloat(raw);
-                if (!isNaN(value) && value >= 1 && value <= 5) {
-                    final_arr[0].push(value.toFixed(1));
-                    final_arr[1].push(tag);
-                }
+            const value = parseFloat(raw);
+            if (!isNaN(value) && value >= 1 && value <= 5) {
+                final_arr[0].push(value.toFixed(2));
+                final_arr[1].push(tag);
             }
         }
     }
