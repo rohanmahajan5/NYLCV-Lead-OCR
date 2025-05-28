@@ -432,43 +432,44 @@ if (cleanResult) {
     }
     if (type === 'emsl') {
     let currentTag = null;
-    let foundAny = final_arr[0].length > 0;
 
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // 🔍 Match sample codes like HAUP-1234, LV-001, CC-001, etc.
-        const tagMatch = line.match(/^Sample:\s+([A-Z]+-\d+)/i);
-        if (tagMatch) currentTag = tagMatch[1];
+        // ✅ Paragraph/Block style: "Sample: XX-XXX"
+        const blockTagMatch = line.match(/^Sample:\s+([A-Z0-9\-\/ ]+)/i);
+        if (blockTagMatch) {
+            currentTag = blockTagMatch[1].split('/')[0].trim(); // strip after slash if needed
+        }
 
-        // ✅ Paragraph-style block: "Sample: ...", then a "Lead ..." line
-        if (!foundAny && currentTag && line.startsWith("Lead")) {
+        // ✅ Paragraph-style result line: "Lead 2.3"
+        if (currentTag && /^Lead\s+[<]?\d+/.test(line)) {
             const resultMatch = line.match(/^Lead\s+([<]?\d+\.?\d*)/i);
             if (resultMatch) {
                 const raw = resultMatch[1];
-                if (raw.includes('<') || raw.toUpperCase().includes('ND')) continue;
-
-                const value = parseFloat(raw);
-                if (!isNaN(value) && value >= 1 && value <= 5) {
-                    final_arr[0].push(value.toFixed(1));
-                    final_arr[1].push(currentTag);
+                if (!raw.includes('<') && !raw.toUpperCase().includes('ND')) {
+                    const value = parseFloat(raw);
+                    if (!isNaN(value) && value >= 1 && value <= 5) {
+                        final_arr[0].push(value.toFixed(1));
+                        final_arr[1].push(currentTag);
+                    }
                 }
-
-                currentTag = null;
             }
+            currentTag = null;
+            continue;
         }
 
-        // ✅ Inline structure: tag appears on same line with result, e.g., "HAUP-0012 ... Lead 5.0"
+        // ✅ Inline JC Broderick-style format: "HAUP-001 ... Lead 2.4"
         const inlineMatch = line.match(/^([A-Z]+-\d+).*?Lead\s+([<]?\d+\.?\d*)/i);
         if (inlineMatch) {
             const tag = inlineMatch[1];
             const raw = inlineMatch[2];
-            if (raw.includes('<') || raw.toUpperCase().includes('ND')) continue;
-
-            const value = parseFloat(raw);
-            if (!isNaN(value) && value >= 1 && value <= 5) {
-                final_arr[0].push(value.toFixed(1));
-                final_arr[1].push(tag);
+            if (!raw.includes('<') && !raw.toUpperCase().includes('ND')) {
+                const value = parseFloat(raw);
+                if (!isNaN(value) && value >= 1 && value <= 5) {
+                    final_arr[0].push(value.toFixed(1));
+                    final_arr[1].push(tag);
+                }
             }
         }
     }
