@@ -436,40 +436,39 @@ if (cleanResult) {
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // ✅ Paragraph/Block style: "Sample: XX-XXX"
+        // ✅ Match paragraph-style: "Sample: <code>", followed by "Lead <value>"
         const blockTagMatch = line.match(/^Sample:\s+([A-Z0-9\-\/ ]+)/i);
         if (blockTagMatch) {
-            currentTag = blockTagMatch[1].split('/')[0].trim(); // strip after slash if needed
+            // Extract tag before any slash or space
+            currentTag = blockTagMatch[1].split(/[\/ ]/)[0].trim();
         }
 
-        // ✅ Paragraph-style result line: "Lead 2.3"
-        if (currentTag && /^Lead\s+[<]?\d+/.test(line)) {
+        if (currentTag && line.match(/^Lead\s+/i)) {
             const resultMatch = line.match(/^Lead\s+([<]?\d+\.?\d*)/i);
             if (resultMatch) {
                 const raw = resultMatch[1];
-                if (!raw.includes('<') && !raw.toUpperCase().includes('ND')) {
-                    const value = parseFloat(raw);
-                    if (!isNaN(value) && value >= 1 && value <= 5) {
-                        final_arr[0].push(value.toFixed(1));
-                        final_arr[1].push(currentTag);
-                    }
+                if (raw.includes('<') || raw.toUpperCase().includes('ND')) continue;
+
+                const value = parseFloat(raw);
+                if (!isNaN(value) && value >= 1 && value <= 5) {
+                    final_arr[0].push(value.toFixed(1));
+                    final_arr[1].push(currentTag);
                 }
+                currentTag = null; // reset after match
             }
-            currentTag = null;
-            continue;
         }
 
-        // ✅ Inline JC Broderick-style format: "HAUP-001 ... Lead 2.4"
+        // ✅ Match inline-style: "<tag> ... Lead <value>"
         const inlineMatch = line.match(/^([A-Z]+-\d+).*?Lead\s+([<]?\d+\.?\d*)/i);
         if (inlineMatch) {
             const tag = inlineMatch[1];
             const raw = inlineMatch[2];
-            if (!raw.includes('<') && !raw.toUpperCase().includes('ND')) {
-                const value = parseFloat(raw);
-                if (!isNaN(value) && value >= 1 && value <= 5) {
-                    final_arr[0].push(value.toFixed(1));
-                    final_arr[1].push(tag);
-                }
+            if (raw.includes('<') || raw.toUpperCase().includes('ND')) continue;
+
+            const value = parseFloat(raw);
+            if (!isNaN(value) && value >= 1 && value <= 5) {
+                final_arr[0].push(value.toFixed(1));
+                final_arr[1].push(tag);
             }
         }
     }
