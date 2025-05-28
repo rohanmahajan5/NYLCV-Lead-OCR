@@ -437,11 +437,11 @@ if (cleanResult) {
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // 🔍 Match generalized EMSL sample codes like HAUP-0010, LV-001, CC-001, or 2024-ER-RHS-1
-        const tagMatch = line.match(/^Sample:\s+([A-Z0-9\-]+)/i);
+        // 🔍 Match sample codes like HAUP-1234, LV-001, CC-001, etc.
+        const tagMatch = line.match(/^Sample:\s+([A-Z]+-\d+)/i);
         if (tagMatch) currentTag = tagMatch[1];
 
-        // ✅ Paragraph-style structure (Sample line, then later Lead line)
+        // ✅ Paragraph-style block: "Sample: ...", then a "Lead ..." line
         if (!foundAny && currentTag && line.startsWith("Lead")) {
             const resultMatch = line.match(/^Lead\s+([<]?\d+\.?\d*)/i);
             if (resultMatch) {
@@ -454,12 +454,12 @@ if (cleanResult) {
                     final_arr[1].push(currentTag);
                 }
 
-                currentTag = null; // reset after processing
+                currentTag = null;
             }
         }
 
-        // ✅ Inline structure (Sample ID and Lead result on same line)
-        const inlineMatch = line.match(/^([A-Z0-9\-]+).*?Lead\s+([<]?\d+\.?\d*)/i);
+        // ✅ Inline structure: tag appears on same line with result, e.g., "HAUP-0012 ... Lead 5.0"
+        const inlineMatch = line.match(/^([A-Z]+-\d+).*?Lead\s+([<]?\d+\.?\d*)/i);
         if (inlineMatch) {
             const tag = inlineMatch[1];
             const raw = inlineMatch[2];
