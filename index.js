@@ -382,19 +382,19 @@ if (cleanResult) {
         const line = txt_arr[i].trim();
 
         // Match sample ID line
-        const idMatch = line.match(/^Sample ID:\s*(\S+)/);
+        const idMatch = line.match(/^Sample ID:\s*(\S+)/i);
         if (idMatch) {
             currentTag = idMatch[1];
         }
 
-        // Match sample location line
-        const locMatch = line.match(/^Field Sample #:\s*(.+)/);
+        // Match field location line
+        const locMatch = line.match(/^Field Sample #:\s*(.+)/i);
         if (locMatch) {
             currentLoc = locMatch[1].trim();
         }
 
-        // Match lines like: "Lead 3.5" or "Lead(µg/L) 0.98 J"
-        const leadMatch = line.match(/^Lead(?:\s*\(.*?\))?\s+([<]?\d*\.?\d*)/);
+        // Match Lead result (handles: "Lead 1.2", "Lead(µg/L) 1.2", "Lead µg/L 1.2")
+        const leadMatch = line.match(/^Lead(?:\s*\(?.*?\)?\s*)?\s+([<]?\d*\.?\d*)/i);
         if (leadMatch && currentTag && currentLoc) {
             const raw = leadMatch[1];
             if (raw.includes('<')) continue;
