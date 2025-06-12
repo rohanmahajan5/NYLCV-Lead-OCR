@@ -381,24 +381,27 @@ if (cleanResult) {
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // Match sample ID and location (multi-line style)
-        const idMatch = line.match(/^Sample ID:\s*(\S+)/);
+        // ✅ Match "Sample ID: 12345678" or similar
+        const idMatch = line.match(/^Sample ID:\s*(\S+)/i);
         if (idMatch) {
             currentTag = idMatch[1];
+            continue;
         }
 
-        const locMatch = line.match(/^Field Sample #:\s*(.+)/);
+        // ✅ Match "Field Sample #: Kitchen Sink" or similar
+        const locMatch = line.match(/^Field Sample #:?\s*(.+)/i);
         if (locMatch) {
             currentLoc = locMatch[1].trim();
+            continue;
         }
 
-        // Match lead result
+        // ✅ Match Lead result line: "Lead 5.00 µg/L" or similar
         if (line.startsWith('Lead')) {
             const parts = line.split(/\s+/);
-            const result = parseFloat(parts[1]);
+            const value = parseFloat(parts[1]);
 
-            if (!isNaN(result) && result >= 1 && result <= 5 && currentTag && currentLoc) {
-                final_arr[0].push(result.toFixed(2));
+            if (!isNaN(value) && value >= 1 && value <= 5 && currentTag && currentLoc) {
+                final_arr[0].push(value.toFixed(2));
                 final_arr[1].push(`${currentTag} ${currentLoc}`);
                 currentTag = null;
                 currentLoc = null;
