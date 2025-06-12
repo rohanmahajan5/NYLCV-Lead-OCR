@@ -381,35 +381,31 @@ if (cleanResult) {
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // Match "Sample ID: 12345678"
-        const idMatch = line.match(/^Sample ID:\s*(\S+)/i);
+        // Match sample ID line
+        const idMatch = line.match(/^Sample ID:\s*(\S+)/);
         if (idMatch) {
             currentTag = idMatch[1];
-            continue;
         }
 
-        // Match "Field Sample #: Kitchen Sink" or similar
-        const locMatch = line.match(/^Field Sample #:?\s*(.+)/i);
+        // Match sample location line
+        const locMatch = line.match(/^Field Sample #:\s*(.+)/);
         if (locMatch) {
             currentLoc = locMatch[1].trim();
-            continue;
         }
 
-        // Match line like "Lead(µg/L) 0.98 J" or "Lead 4.3"
-        const leadMatch = line.match(/^Lead(?:\s*\(.*?\))?\s+([<]?\d*\.?\d+)/i);
+        // Match lines like: "Lead 3.5" or "Lead(µg/L) 0.98 J"
+        const leadMatch = line.match(/^Lead(?:\s*\(.*?\))?\s+([<]?\d*\.?\d*)/);
         if (leadMatch && currentTag && currentLoc) {
             const raw = leadMatch[1];
             if (raw.includes('<')) continue;
 
-            const value = parseFloat(raw);
-            if (!isNaN(value) && value >= 1 && value <= 5) {
-                final_arr[0].push(value.toFixed(2));
+            const result = parseFloat(raw);
+            if (!isNaN(result) && result >= 1 && result <= 5) {
+                final_arr[0].push(result.toFixed(2));
                 final_arr[1].push(`${currentTag} ${currentLoc}`);
+                currentTag = null;
+                currentLoc = null;
             }
-
-            // reset
-            currentTag = null;
-            currentLoc = null;
         }
     }
 }
