@@ -409,30 +409,40 @@ if (cleanResult) {
         }
     }
 }
-    if (type =='pace-laboratory') {
-        for (var i = 0; i < txt_arr.length; i++) {
-            var line = txt_arr[i];
-            var line_arr = line.split(' ').filter(String)
-            // Look for the LabID
-            //line_arr.splice(0,)
-            if (line_arr.includes('Client') && line_arr.includes('Sample')) {
-                line_arr.splice(0, line_arr.indexOf('Sample')+2)
-                var tag = line_arr.join(' ');
-                console.log(tag)
-                //finding result line
-                var j = i;
-                while ( !(txt_arr[j].split(' ')[0] === 'Lead') ) {
-                    j++;
-                }
-                var result = txt_arr[j].split(' ')[1].replace('*','');
-                if ( result.includes('§') || // common OCR error
-                (!(result.includes('<')) && parseFloat(result) < 15) ) {
-                    final_arr[0].push(result);
-                    final_arr[1].push(tag); 
+    if (type === 'pace-laboratory') {
+    for (let i = 0; i < txt_arr.length; i++) {
+        const line = txt_arr[i].trim();
+
+        // Match the sample ID line
+        if (/Client Sample ID:/i.test(line)) {
+            const tagMatch = line.match(/Client Sample ID:\s*(.+)/i);
+            const tag = tagMatch ? tagMatch[1].trim() : null;
+
+            if (tag) {
+                // Look ahead for the corresponding Lead line
+                for (let j = i + 1; j < txt_arr.length; j++) {
+                    const leadLine = txt_arr[j].trim();
+                    if (/^Lead/i.test(leadLine)) {
+                        const parts = leadLine.split(/\s+/);
+                        const resultRaw = parts[1].replace('*', '').replace('§', '');
+
+                        if (
+                            !resultRaw.includes('<') &&
+                            !resultRaw.toUpperCase().includes('ND')
+                        ) {
+                            const value = parseFloat(resultRaw);
+                            if (!isNaN(value) && value >= 1 && value <= 15) {
+                                final_arr[0].push(value.toFixed(2));
+                                final_arr[1].push(tag);
+                            }
+                        }
+                        break;
+                    }
                 }
             }
         }
     }
+}
     if (type === 'emsl') {
     let currentTag = null;
 
