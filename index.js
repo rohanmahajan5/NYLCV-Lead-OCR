@@ -375,32 +375,32 @@ if (cleanResult) {
         }
     }
     if (type === 'pace-analytical') {
+    let currentSample = null;
     let currentTag = null;
     let currentLoc = null;
-    let currentSample = null;
 
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // ----------- Format 1: Sample ID / Field Sample # (used in 012-250.txt) ----------
-        const idMatch = line.match(/^Sample ID:\s*(\S+)/i);
-        if (idMatch) {
-            currentTag = idMatch[1];
+        // Format A: Sample ID / Field Sample #
+        if (/^Sample ID:/i.test(line)) {
+            const match = line.match(/^Sample ID:\s*(\S+)/i);
+            if (match) currentTag = match[1];
         }
 
-        const locMatch = line.match(/^Field Sample #:\s*(.+)/i);
-        if (locMatch) {
-            currentLoc = locMatch[1].trim();
+        if (/^Field Sample #:/i.test(line)) {
+            const match = line.match(/^Field Sample #:\s*(.+)/i);
+            if (match) currentLoc = match[1].trim();
         }
 
-        // ----------- Format 2: Sample + Lab ID (used in 032-356 and 169-240) ------------
-        const sampleMatch = line.match(/^Sample:\s*(.*?)\s+Lab ID:/i);
-        if (sampleMatch) {
-            currentSample = sampleMatch[1].trim();
+        // Format B: Sample + Lab ID
+        if (/^Sample:/i.test(line)) {
+            const match = line.match(/^Sample:\s*(.*?)\s+Lab ID:/i);
+            if (match) currentSample = match[1].trim();
         }
 
-        // --------------------- Lead Value Match (all formats) -------------------------
-        const leadMatch = line.match(/^Lead(?:\s*\(?.*?\)?\s*)?\s+([<]?\d*\.?\d*)\s*(?:ug\/L)?/i);
+        // Match Lead line (covers both "Lead 1.0 ug/L" and "Lead µg/L 1.0")
+        const leadMatch = line.match(/^Lead(?:\s*\(?.*?\)?\s*)?\s+([<]?\d*\.?\d*)/i);
         if (leadMatch) {
             const raw = leadMatch[1];
             if (raw.includes('<')) continue;
@@ -415,7 +415,7 @@ if (cleanResult) {
                 } else if (currentSample) {
                     final_arr[0].push(result.toFixed(2));
                     final_arr[1].push(currentSample);
-                    // Do NOT clear currentSample — some files list more data under same name
+                    // Leave currentSample in place unless explicitly reset
                 }
             }
         }
