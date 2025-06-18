@@ -375,28 +375,48 @@ if (cleanResult) {
         }
     }
     if (type === 'pace-analytical') {
+    let currentTag = null;
+    let currentLoc = null;
     let currentSample = null;
 
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // Extract sample name
+        // Format 1: Sample ID / Field Sample # (used in 012-250.txt)
+        const idMatch = line.match(/^Sample ID:\s*(\S+)/i);
+        if (idMatch) {
+            currentTag = idMatch[1];
+        }
+
+        const locMatch = line.match(/^Field Sample #:\s*(.+)/i);
+        if (locMatch) {
+            currentLoc = locMatch[1].trim();
+        }
+
+        // Format 2: Sample + Lab ID (used in 032-356.txt and 169-240.txt)
         const sampleMatch = line.match(/^Sample:\s*(.*?)\s+Lab ID:/i);
         if (sampleMatch) {
             currentSample = sampleMatch[1].trim();
         }
 
-        // Match lead values
-        const leadMatch = line.match(/^Lead\s+([<]?\d*\.?\d*)\s+ug\/L/i);
-        if (leadMatch && currentSample) {
+        // Match lead result in all formats
+        const leadMatch = line.match(/^Lead(?:\s*\(?.*?\)?\s*)?\s+([<]?\d*\.?\d*)\s*ug\/?L?/i);
+        if (leadMatch) {
             const raw = leadMatch[1];
             if (raw.includes('<')) continue;
 
             const result = parseFloat(raw);
             if (!isNaN(result) && result >= 1 && result <= 5) {
-                final_arr[0].push(result.toFixed(2));
-                final_arr[1].push(currentSample);
-                currentSample = null;
+                if (currentTag && currentLoc) {
+                    final_arr[0].push(result.toFixed(2));
+                    final_arr[1].push(`${currentTag} ${currentLoc}`);
+                    currentTag = null;
+                    currentLoc = null;
+                } else if (currentSample) {
+                    final_arr[0].push(result.toFixed(2));
+                    final_arr[1].push(currentSample);
+                    // Do NOT reset currentSample — allow reuse
+                }
             }
         }
     }
