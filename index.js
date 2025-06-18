@@ -382,7 +382,7 @@ if (cleanResult) {
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // Format 1: Sample ID / Field Sample # (used in 012-250.txt)
+        // ----------- Format 1: Sample ID / Field Sample # (used in 012-250.txt) ----------
         const idMatch = line.match(/^Sample ID:\s*(\S+)/i);
         if (idMatch) {
             currentTag = idMatch[1];
@@ -393,14 +393,14 @@ if (cleanResult) {
             currentLoc = locMatch[1].trim();
         }
 
-        // Format 2: Sample + Lab ID (used in 032-356.txt and 169-240.txt)
+        // ----------- Format 2: Sample + Lab ID (used in 032-356 and 169-240) ------------
         const sampleMatch = line.match(/^Sample:\s*(.*?)\s+Lab ID:/i);
         if (sampleMatch) {
             currentSample = sampleMatch[1].trim();
         }
 
-        // Match lead result in all formats
-        const leadMatch = line.match(/^Lead(?:\s*\(?.*?\)?\s*)?\s+([<]?\d*\.?\d*)\s*ug\/?L?/i);
+        // --------------------- Lead Value Match (all formats) -------------------------
+        const leadMatch = line.match(/^Lead(?:\s*\(?.*?\)?\s*)?\s+([<]?\d*\.?\d*)\s*(?:ug\/L)?/i);
         if (leadMatch) {
             const raw = leadMatch[1];
             if (raw.includes('<')) continue;
@@ -415,7 +415,7 @@ if (cleanResult) {
                 } else if (currentSample) {
                     final_arr[0].push(result.toFixed(2));
                     final_arr[1].push(currentSample);
-                    // Do NOT reset currentSample — allow reuse
+                    // Do NOT clear currentSample — some files list more data under same name
                 }
             }
         }
