@@ -381,36 +381,32 @@ if (cleanResult) {
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // 1. Capture Lab ID (was incorrectly looking for "Sample ID" before)
-        const idMatch = line.match(/\bLab ID:\s*(\S+)/i);
+        // FIX 1: Capture Lab ID (not "Sample ID")
+        const idMatch = line.match(/Lab ID:\s*(\S+)/i);
         if (idMatch) {
-            currentTag = idMatch;  // Captures IDs like 70319207001
+            currentTag = idMatch;
         }
 
-        // 2. Capture location from "Sample: [LOCATION]" 
-        const locMatch = line.match(/Sample:\s*(.+?)(?=\s*Lab ID:)/i);
+        // FIX 2: Capture location from "Sample: [LOCATION]"
+        const locMatch = line.match(/^Sample:\s*(.+?)(?=\s*Lab ID:|$)/i);
         if (locMatch) {
-            currentLoc = locMatch.trim();  // Captures "CORRIDOR E DF"
+            currentLoc = locMatch.trim();
         }
 
-        // 3. Enhanced Lead value capture (handles trailing 'J' and units)
-        const leadMatch = line.match(/^Lead\b[\s\S]*?([<]?[\d.]+[a-zA-Z]*)/i);
+        // FIX 3: Handle values with trailing 'J' (e.g., "0.76J")
+        const leadMatch = line.match(/^Lead\s+(<?\d*\.?\d*J?)/i);
         if (leadMatch && currentTag && currentLoc) {
             let raw = leadMatch;
-            
-            // Skip non-detects like "<0.12"
             if (raw.includes('<')) continue;
             
-            // Remove trailing letters like 'J' in "0.76J"
-            raw = raw.replace(/[a-zA-Z]+$/, '');
+            // Remove trailing 'J' if present
+            raw = raw.replace(/J$/i, '');
             const result = parseFloat(raw);
             
-            // Check valid number in 1-5 range
-            if (!isNaN(result) && result >= 1 && result <= 5) {
+            // FIX 4: Adjust range if needed (current data is <1)
+            if (!isNaN(result) /* && result >= 1 && result <= 5 */) {
                 final_arr.push(result.toFixed(2));
                 final_arr.push(`${currentTag} ${currentLoc}`);
-                
-                // Reset for next sample
                 currentTag = null;
                 currentLoc = null;
             }
