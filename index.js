@@ -375,40 +375,28 @@ if (cleanResult) {
         }
     }
     if (type === 'pace-analytical') {
-    let currentTag = null;
-    let currentLoc = null;
+    let currentSample = null;
 
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // FIX 1: Capture Lab ID (not "Sample ID")
-        const idMatch = line.match(/Lab ID:\s*(\S+)/i);
-        if (idMatch) {
-            currentTag = idMatch;
+        // Extract sample name
+        const sampleMatch = line.match(/^Sample:\s*(.*?)\s+Lab ID:/i);
+        if (sampleMatch) {
+            currentSample = sampleMatch[1].trim();
         }
 
-        // FIX 2: Capture location from "Sample: [LOCATION]"
-        const locMatch = line.match(/^Sample:\s*(.+?)(?=\s*Lab ID:|$)/i);
-        if (locMatch) {
-            currentLoc = locMatch.trim();
-        }
-
-        // FIX 3: Handle values with trailing 'J' (e.g., "0.76J")
-        const leadMatch = line.match(/^Lead\s+(<?\d*\.?\d*J?)/i);
-        if (leadMatch && currentTag && currentLoc) {
-            let raw = leadMatch;
+        // Match lead values
+        const leadMatch = line.match(/^Lead\s+([<]?\d*\.?\d*)\s+ug\/L/i);
+        if (leadMatch && currentSample) {
+            const raw = leadMatch[1];
             if (raw.includes('<')) continue;
-            
-            // Remove trailing 'J' if present
-            raw = raw.replace(/J$/i, '');
+
             const result = parseFloat(raw);
-            
-            // FIX 4: Adjust range if needed (current data is <1)
-            if (!isNaN(result) /* && result >= 1 && result <= 5 */) {
-                final_arr.push(result.toFixed(2));
-                final_arr.push(`${currentTag} ${currentLoc}`);
-                currentTag = null;
-                currentLoc = null;
+            if (!isNaN(result) && result >= 1 && result <= 5) {
+                final_arr[0].push(result.toFixed(2));
+                final_arr[1].push(currentSample);
+                currentSample = null;
             }
         }
     }
