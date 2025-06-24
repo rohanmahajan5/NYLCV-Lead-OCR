@@ -375,48 +375,36 @@ if (cleanResult) {
         }
     }
     if (type === 'pace-analytical') {
-    let currentSample = null;
     let currentTag = null;
     let currentLoc = null;
 
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // Format A — Sample ID and Field Sample #
+        // Match sample ID line
         const idMatch = line.match(/^Sample ID:\s*(\S+)/i);
         if (idMatch) {
             currentTag = idMatch[1];
         }
 
+        // Match field location line
         const locMatch = line.match(/^Field Sample #:\s*(.+)/i);
         if (locMatch) {
             currentLoc = locMatch[1].trim();
         }
 
-        // Format B — Sample + Lab ID
-        const sampleMatch = line.match(/^Sample:\s*(.*?)\s+Lab ID:/i);
-        if (sampleMatch) {
-            currentSample = sampleMatch[1].trim();
-        }
-
-        // Match Lead value (supports many variants)
+        // Match Lead result (handles: "Lead 1.2", "Lead(µg/L) 1.2", "Lead µg/L 1.2")
         const leadMatch = line.match(/^Lead(?:\s*\(?.*?\)?\s*)?\s+([<]?\d*\.?\d*)/i);
-        if (leadMatch) {
-            const valueStr = leadMatch[1];
-            if (valueStr.includes('<')) continue;
+        if (leadMatch && currentTag && currentLoc) {
+            const raw = leadMatch[1];
+            if (raw.includes('<')) continue;
 
-            const value = parseFloat(valueStr);
-            if (!isNaN(value) && value >= 1 && value <= 5) {
-                if (currentTag && currentLoc) {
-                    final_arr[0].push(value.toFixed(2));
-                    final_arr[1].push(`${currentTag} ${currentLoc}`);
-                    currentTag = null;
-                    currentLoc = null;
-                } else if (currentSample) {
-                    final_arr[0].push(value.toFixed(2));
-                    final_arr[1].push(currentSample);
-                    // Don't reset currentSample; next lead result might belong to same sample
-                }
+            const result = parseFloat(raw);
+            if (!isNaN(result) && result >= 1 && result <= 5) {
+                final_arr[0].push(result.toFixed(2));
+                final_arr[1].push(`${currentTag} ${currentLoc}`);
+                currentTag = null;
+                currentLoc = null;
             }
         }
     }
