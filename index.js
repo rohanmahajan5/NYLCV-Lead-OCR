@@ -382,40 +382,40 @@ if (cleanResult) {
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // Format A: Sample ID / Field Sample #
-        if (/^Sample ID:/i.test(line)) {
-            const match = line.match(/^Sample ID:\s*(\S+)/i);
-            if (match) currentTag = match[1];
+        // Format A — Sample ID and Field Sample #
+        const idMatch = line.match(/^Sample ID:\s*(\S+)/i);
+        if (idMatch) {
+            currentTag = idMatch[1];
         }
 
-        if (/^Field Sample #:/i.test(line)) {
-            const match = line.match(/^Field Sample #:\s*(.+)/i);
-            if (match) currentLoc = match[1].trim();
+        const locMatch = line.match(/^Field Sample #:\s*(.+)/i);
+        if (locMatch) {
+            currentLoc = locMatch[1].trim();
         }
 
-        // Format B: Sample + Lab ID
-        if (/^Sample:/i.test(line)) {
-            const match = line.match(/^Sample:\s*(.*?)\s+Lab ID:/i);
-            if (match) currentSample = match[1].trim();
+        // Format B — Sample + Lab ID
+        const sampleMatch = line.match(/^Sample:\s*(.*?)\s+Lab ID:/i);
+        if (sampleMatch) {
+            currentSample = sampleMatch[1].trim();
         }
 
-        // Match Lead line (covers both "Lead 1.0 ug/L" and "Lead µg/L 1.0")
+        // Match Lead value (supports many variants)
         const leadMatch = line.match(/^Lead(?:\s*\(?.*?\)?\s*)?\s+([<]?\d*\.?\d*)/i);
         if (leadMatch) {
-            const raw = leadMatch[1];
-            if (raw.includes('<')) continue;
+            const valueStr = leadMatch[1];
+            if (valueStr.includes('<')) continue;
 
-            const result = parseFloat(raw);
-            if (!isNaN(result) && result >= 1 && result <= 5) {
+            const value = parseFloat(valueStr);
+            if (!isNaN(value) && value >= 1 && value <= 5) {
                 if (currentTag && currentLoc) {
-                    final_arr[0].push(result.toFixed(2));
+                    final_arr[0].push(value.toFixed(2));
                     final_arr[1].push(`${currentTag} ${currentLoc}`);
                     currentTag = null;
                     currentLoc = null;
                 } else if (currentSample) {
-                    final_arr[0].push(result.toFixed(2));
+                    final_arr[0].push(value.toFixed(2));
                     final_arr[1].push(currentSample);
-                    // Leave currentSample in place unless explicitly reset
+                    // Don't reset currentSample; next lead result might belong to same sample
                 }
             }
         }
