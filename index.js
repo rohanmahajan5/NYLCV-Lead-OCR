@@ -376,46 +376,34 @@ if (cleanResult) {
     }
    if (type === 'pace-analytical') {
     let currentSample = null;
-    let inResults = false;
 
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // Start of a results block
-        if (/ANALYTICAL RESULTS/i.test(line)) {
-            inResults = true;
-            currentSample = null;
+        // Match sample lines from both formats
+        const sampleMatch1 = line.match(/^Sample:\s*(.+)/i);
+        const sampleMatch2 = line.match(/^Field Sample #:\s*(.+)/i);
+        if (sampleMatch1) {
+            currentSample = sampleMatch1[1].trim();
+            continue;
+        } else if (sampleMatch2) {
+            currentSample = sampleMatch2[1].trim();
             continue;
         }
 
-        if (inResults) {
-            // Sample extraction
-            const sampleMatch = line.match(/Sample:\s*(.+?)\s+Lab ID:/i);
-            const fieldMatch = line.match(/Field Sample #:\s*(.+)/i);
-            if (sampleMatch) {
-                currentSample = sampleMatch[1].trim();
-            } else if (fieldMatch) {
-                currentSample = fieldMatch[1].trim();
-            }
+        // Match lead value lines with flexibility
+        const leadMatch = line.match(/Lead\s+([<]?\d*\.?\d*)\s+ug\/L/i);
+        if (leadMatch && currentSample) {
+            const raw = leadMatch[1].trim();
 
-            // Fallback: location-style line like "CLASSROOM 188 TAP"
-            if (!currentSample && /^[A-Z0-9\s\-]{5,50}TAP\b/i.test(line)) {
-                currentSample = line.trim();
-            }
+            // Skip values with "<"
+            if (raw.includes('<')) continue;
 
-            // Detect Lead value
-            const leadMatch = line.match(/Lead\s+([<]?\d*\.?\d+)\s+ug\/L/i);
-            if (leadMatch) {
-                const val = leadMatch[1].trim();
-                if (val.includes('<')) continue;
-
-                const parsed = parseFloat(val);
-                if (!isNaN(parsed) && parsed >= 1 && parsed <= 5) {
-                    final_arr[0].push(parsed.toFixed(2));                // Value
-                    final_arr[1].push(currentSample || "UNKNOWN");       // Sample
-                }
-
-                // DO NOT reset `inResults` or `currentSample` here
+            const result = parseFloat(raw);
+            if (!isNaN(result) && result >= 1 && result <= 5) {
+                final_arr[0].push(result.toFixed(2));     // Lead value
+                final_arr[1].push(currentSample);         // Associated sample
+                // DO NOT reset currentSample — some samples have multiple entries
             }
         }
     }
