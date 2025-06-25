@@ -376,34 +376,43 @@ if (cleanResult) {
     }
    if (type === 'pace-analytical') {
     let currentSample = null;
+    let lineBuffer = ["", ""]; // store the last 2 lines for fallback
 
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // Match sample lines from both formats
-        const sampleMatch1 = line.match(/^Sample:\s*(.+)/i);
-        const sampleMatch2 = line.match(/^Field Sample #:\s*(.+)/i);
-        if (sampleMatch1) {
-            currentSample = sampleMatch1[1].trim();
+        // Update rolling buffer
+        lineBuffer.push(line);
+        if (lineBuffer.length > 3) lineBuffer.shift();
+
+        // Check for explicit sample identifiers
+        const sampleMatch = line.match(/^Sample:\s*(.+)/i);
+        const fieldMatch = line.match(/^Field Sample #:\s*(.+)/i);
+        if (sampleMatch) {
+            currentSample = sampleMatch[1].trim();
             continue;
-        } else if (sampleMatch2) {
-            currentSample = sampleMatch2[1].trim();
+        } else if (fieldMatch) {
+            currentSample = fieldMatch[1].trim();
             continue;
         }
 
-        // Match lead value lines with flexibility
+        // Match lead result
         const leadMatch = line.match(/Lead\s+([<]?\d*\.?\d*)\s+ug\/L/i);
-        if (leadMatch && currentSample) {
+        if (leadMatch) {
             const raw = leadMatch[1].trim();
 
-            // Skip values with "<"
+            // Skip non-detects like "<1.0"
             if (raw.includes('<')) continue;
 
             const result = parseFloat(raw);
             if (!isNaN(result) && result >= 1 && result <= 5) {
-                final_arr[0].push(result.toFixed(2));     // Lead value
-                final_arr[1].push(currentSample);         // Associated sample
-                // DO NOT reset currentSample — some samples have multiple entries
+                // Use current sample or fallback to previous line
+                const sampleName = currentSample || lineBuffer[lineBuffer.length - 2].trim();
+                final_arr[0].push(result.toFixed(2));
+                final_arr[1].push(sampleName);
+
+                // Reset only after successful match
+                currentSample = null;
             }
         }
     }
