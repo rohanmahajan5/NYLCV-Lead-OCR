@@ -380,13 +380,13 @@ if (cleanResult) {
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // Extract sample name
+        // Match sample name
         const sampleMatch = line.match(/^Sample:\s*(.*?)\s+Lab ID:/i);
         if (sampleMatch) {
             currentSample = sampleMatch[1].trim();
         }
 
-        // Match lead values
+        // Match lead line (extract first number, ignore others)
         const leadMatch = line.match(/^Lead\s+([<]?\d*\.?\d*)\s+ug\/L/i);
         if (leadMatch && currentSample) {
             const raw = leadMatch[1];
@@ -396,7 +396,7 @@ if (cleanResult) {
             if (!isNaN(result) && result >= 1 && result <= 5) {
                 final_arr[0].push(result.toFixed(2));
                 final_arr[1].push(currentSample);
-                currentSample = null;
+                currentSample = null; // Reset after use
             }
         }
     }
