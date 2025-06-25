@@ -380,31 +380,29 @@ if (cleanResult) {
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // Match sample names from either format:
-        // Format 1: "Sample: <name>"
-        // Format 2: "Field Sample #: <name>"
-        const sampleMatch1 = line.match(/^Sample:\s*(.+)/i);
-        const sampleMatch2 = line.match(/^Field Sample #:\s*(.+)/i);
-        if (sampleMatch1) {
-            currentSample = sampleMatch1[1].trim();
+        // Match sample names — flexible format
+        const sampleMatch = line.match(/^Sample:\s*(.+)/i);
+        const fieldSampleMatch = line.match(/^Field Sample #:\s*(.+)/i);
+        if (sampleMatch) {
+            currentSample = sampleMatch[1].trim();
             continue;
-        } else if (sampleMatch2) {
-            currentSample = sampleMatch2[1].trim();
+        } else if (fieldSampleMatch) {
+            currentSample = fieldSampleMatch[1].trim();
             continue;
         }
 
-        // Match lead results, tolerant of trailing columns
-        const leadMatch = line.match(/^Lead\s+([<]?\d*\.?\d*)\s+/i);
+        // Match lead values (e.g., "Lead 1.5 ug/L" with trailing metadata)
+        const leadMatch = line.match(/^Lead\s+([<]?\d*\.?\d*)\s+ug\/L/i);
         if (leadMatch && currentSample) {
             const raw = leadMatch[1].trim();
 
-            // Skip non-detects (e.g., "<1.0")
+            // Skip non-detects like "<1.0"
             if (raw.includes('<')) continue;
 
             const result = parseFloat(raw);
             if (!isNaN(result) && result >= 1 && result <= 5) {
-                final_arr[0].push(result.toFixed(2));
-                final_arr[1].push(currentSample);
+                final_arr[0].push(result.toFixed(2));  // Value
+                final_arr[1].push(currentSample);      // Sample name
             }
         }
     }
