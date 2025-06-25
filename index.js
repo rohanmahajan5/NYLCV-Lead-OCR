@@ -376,29 +376,35 @@ if (cleanResult) {
     }
    if (type === 'pace-analytical') {
     let currentSample = null;
+    let captureSample = false;
 
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // Match sample names from either format:
-        // Format 1: "Sample: <name>"
-        // Format 2: "Field Sample #: <name>"
-        const sampleMatch1 = line.match(/^Sample:\s*(.+)/i);
-        const sampleMatch2 = line.match(/^Field Sample #:\s*(.+)/i);
-        if (sampleMatch1) {
-            currentSample = sampleMatch1[1].trim();
-            continue;
-        } else if (sampleMatch2) {
-            currentSample = sampleMatch2[1].trim();
+        // Look for sample name header line
+        if (line.startsWith('Sample:')) {
+            const sampleMatch = line.match(/^Sample:\s*(.+)/i);
+            if (sampleMatch) {
+                currentSample = sampleMatch[1].trim();
+                captureSample = true;
+            }
             continue;
         }
 
-        // Match lead results, tolerant of trailing columns
-        const leadMatch = line.match(/^Lead\s+([<]?\d*\.?\d*)\s+/i);
+        // Alternate sample name format, e.g., "Sample: KITCHEN 153 TAP A"
+        const altSampleMatch = line.match(/^Sample:\s*(.+?)\s+Lab ID:/i);
+        if (altSampleMatch) {
+            currentSample = altSampleMatch[1].trim();
+            captureSample = true;
+            continue;
+        }
+
+        // Match lead concentration value
+        const leadMatch = line.match(/^Lead\s+([<]?\d*\.?\d*)/i);
         if (leadMatch && currentSample) {
             const raw = leadMatch[1].trim();
 
-            // Skip non-detects (e.g., "<1.0")
+            // Skip non-detects
             if (raw.includes('<')) continue;
 
             const result = parseFloat(raw);
@@ -406,6 +412,10 @@ if (cleanResult) {
                 final_arr[0].push(result.toFixed(2));
                 final_arr[1].push(currentSample);
             }
+
+            // Reset sample to avoid incorrect reuse
+            captureSample = false;
+            currentSample = null;
         }
     }
 }
