@@ -376,13 +376,12 @@ if (cleanResult) {
     }
    if (type === 'pace-analytical') {
     let currentSample = null;
-    let finalBlock = [];
     let inResults = false;
 
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // Start of new report block
+        // Start of a results block
         if (/ANALYTICAL RESULTS/i.test(line)) {
             inResults = true;
             currentSample = null;
@@ -399,12 +398,12 @@ if (cleanResult) {
                 currentSample = fieldMatch[1].trim();
             }
 
-            // Fallback: if line has no label but seems to be a location
-            if (!currentSample && /^[A-Z\s\d]{3,50}TAP$/i.test(line)) {
+            // Fallback: location-style line like "CLASSROOM 188 TAP"
+            if (!currentSample && /^[A-Z0-9\s\-]{5,50}TAP\b/i.test(line)) {
                 currentSample = line.trim();
             }
 
-            // Detect Lead values: numeric only (skip <)
+            // Detect Lead value
             const leadMatch = line.match(/Lead\s+([<]?\d*\.?\d+)\s+ug\/L/i);
             if (leadMatch) {
                 const val = leadMatch[1].trim();
@@ -416,9 +415,7 @@ if (cleanResult) {
                     final_arr[1].push(currentSample || "UNKNOWN");       // Sample
                 }
 
-                // reset block
-                inResults = false;
-                currentSample = null;
+                // DO NOT reset `inResults` or `currentSample` here
             }
         }
     }
