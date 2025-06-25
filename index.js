@@ -380,25 +380,31 @@ if (cleanResult) {
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // 1. Match and update the current sample name
-        const sampleMatch = line.match(/^Sample:\s*(.*?)\s+Lab ID:/i);
-        if (sampleMatch) {
-            currentSample = sampleMatch[1].trim();
+        // Match sample names from either format:
+        // Format 1: "Sample: <name>"
+        // Format 2: "Field Sample #: <name>"
+        const sampleMatch1 = line.match(/^Sample:\s*(.+)/i);
+        const sampleMatch2 = line.match(/^Field Sample #:\s*(.+)/i);
+        if (sampleMatch1) {
+            currentSample = sampleMatch1[1].trim();
+            continue;
+        } else if (sampleMatch2) {
+            currentSample = sampleMatch2[1].trim();
             continue;
         }
 
-        // 2. Match Lead result line
-        const leadMatch = line.match(/^Lead\s+([<]?\d*\.?\d*)\s+ug\/L/i);
+        // Match lead results, tolerant of trailing columns
+        const leadMatch = line.match(/^Lead\s+([<]?\d*\.?\d*)\s+/i);
         if (leadMatch && currentSample) {
             const raw = leadMatch[1].trim();
 
+            // Skip non-detects (e.g., "<1.0")
             if (raw.includes('<')) continue;
 
             const result = parseFloat(raw);
             if (!isNaN(result) && result >= 1 && result <= 5) {
                 final_arr[0].push(result.toFixed(2));
                 final_arr[1].push(currentSample);
-                // Don't reset currentSample here — wait until new sample
             }
         }
     }
