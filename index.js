@@ -376,42 +376,48 @@ if (cleanResult) {
     }
    if (type === 'pace-analytical') {
     let currentSample = null;
-    let lineBuffer = ["", ""]; // store the last 2 lines for fallback
+    let finalBlock = [];
+    let inResults = false;
 
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // Update rolling buffer
-        lineBuffer.push(line);
-        if (lineBuffer.length > 3) lineBuffer.shift();
-
-        // Check for explicit sample identifiers
-        const sampleMatch = line.match(/^Sample:\s*(.+)/i);
-        const fieldMatch = line.match(/^Field Sample #:\s*(.+)/i);
-        if (sampleMatch) {
-            currentSample = sampleMatch[1].trim();
-            continue;
-        } else if (fieldMatch) {
-            currentSample = fieldMatch[1].trim();
+        // Start of new report block
+        if (/ANALYTICAL RESULTS/i.test(line)) {
+            inResults = true;
+            currentSample = null;
             continue;
         }
 
-        // Match lead result
-        const leadMatch = line.match(/Lead\s+([<]?\d*\.?\d*)\s+ug\/L/i);
-        if (leadMatch) {
-            const raw = leadMatch[1].trim();
+        if (inResults) {
+            // Sample extraction
+            const sampleMatch = line.match(/Sample:\s*(.+?)\s+Lab ID:/i);
+            const fieldMatch = line.match(/Field Sample #:\s*(.+)/i);
+            if (sampleMatch) {
+                currentSample = sampleMatch[1].trim();
+            } else if (fieldMatch) {
+                currentSample = fieldMatch[1].trim();
+            }
 
-            // Skip non-detects like "<1.0"
-            if (raw.includes('<')) continue;
+            // Fallback: if line has no label but seems to be a location
+            if (!currentSample && /^[A-Z\s\d]{3,50}TAP$/i.test(line)) {
+                currentSample = line.trim();
+            }
 
-            const result = parseFloat(raw);
-            if (!isNaN(result) && result >= 1 && result <= 5) {
-                // Use current sample or fallback to previous line
-                const sampleName = currentSample || lineBuffer[lineBuffer.length - 2].trim();
-                final_arr[0].push(result.toFixed(2));
-                final_arr[1].push(sampleName);
+            // Detect Lead values: numeric only (skip <)
+            const leadMatch = line.match(/Lead\s+([<]?\d*\.?\d+)\s+ug\/L/i);
+            if (leadMatch) {
+                const val = leadMatch[1].trim();
+                if (val.includes('<')) continue;
 
-                // Reset only after successful match
+                const parsed = parseFloat(val);
+                if (!isNaN(parsed) && parsed >= 1 && parsed <= 5) {
+                    final_arr[0].push(parsed.toFixed(2));                // Value
+                    final_arr[1].push(currentSample || "UNKNOWN");       // Sample
+                }
+
+                // reset block
+                inResults = false;
                 currentSample = null;
             }
         }
