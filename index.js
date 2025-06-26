@@ -807,24 +807,26 @@ if (cleanResult) {
         const line = txt_arr[i].trim();
 
         if (line.includes('Metals Analysis')) {
-            // Get sample tag two lines before
+            // Sample tag is two lines above
             const tagLine = txt_arr[i - 2]?.trim();
-            const tagParts = tagLine ? tagLine.split(/\s+/) : [];
-            const tag = tagParts.length > 1 ? tagParts[1] : 'UNKNOWN';
+            const tag = tagLine?.split(/\s+/)[1] || 'UNKNOWN';
 
-            // Get lead result from the next line
-            const nextLine = txt_arr[i + 1]?.trim();
-            const aheadParts = nextLine ? nextLine.split(/\s+/).filter(Boolean) : [];
-            const result = aheadParts[aheadParts.length - 5];
+            // Get result line one line below
+            const resultLine = txt_arr[i + 1]?.trim();
+            const resultParts = resultLine?.split(/\s+/).filter(Boolean) || [];
 
-            if (!result) continue;
+            // Find first numeric result (or <value)
+            const result = resultParts.find(part =>
+                part.match(/^<?\d+(\.\d+)?$/)
+            );
 
-            if (
-                (result.includes('<') && result.includes('5')) || 
-                (!result.includes('<') && parseFloat(result) > 1.0 && parseFloat(result) < 15)
-            ) {
+            // Skip if nothing found or it's a non-detect
+            if (!result || result.includes('<')) continue;
+
+            const numeric = parseFloat(result);
+            if (numeric >= 1.00 && numeric <= 5.00) {
+                final_arr[0].push(numeric.toFixed(2));
                 final_arr[1].push(tag);
-                final_arr[0].push(result);
             }
         }
     }
