@@ -420,41 +420,33 @@ if (cleanResult) {
     }
 }
     if (type === 'pace-laboratory') {
+    const samplePattern = /(Client Sample ID:|Sample:)\s*(.*?)(?:Lab ID|Collected|$)/i;
+    const leadPattern = /\bLead\b.*?([<]?\d+\.?\d*)/i;
+
+    let currentSample = null;
+
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // Match the sample ID line
-        if (/Client Sample ID:/i.test(line)) {
-            const tagMatch = line.match(/Client Sample ID:\s*(.+)/i);
-            const tag = tagMatch ? tagMatch[1].trim() : null;
+        // Match sample ID
+        const sampleMatch = line.match(samplePattern);
+        if (sampleMatch) {
+            currentSample = sampleMatch[2].trim();
+            continue;
+        }
 
-            if (tag) {
-                // Look ahead for the corresponding Lead line
-                for (let j = i + 1; j < txt_arr.length; j++) {
-                    const leadLine = txt_arr[j].trim();
+        // Match lead result
+        const leadMatch = line.match(leadPattern);
+        if (leadMatch && currentSample) {
+            let raw = leadMatch[1];
 
-                    // Stop if we hit a new sample block
-                    if (/Client Sample ID:/i.test(leadLine)) break;
+            // Remove qualifiers (e.g., *, J, §)
+            const cleaned = raw.replace(/[^\d.]/g, '');
 
-                    if (/^Lead\b/i.test(leadLine)) {
-                        const parts = leadLine.split(/\s+/);
-
-                        // Find the first number-looking entry in the line
-                        const resultRaw = parts.find(p => /^[<]?\d+(\.\d+)?[A-Za-z§*]*$/.test(p));
-                        if (!resultRaw) break;
-
-                        if (resultRaw.includes('<') || resultRaw.toUpperCase().includes('ND')) break;
-
-                        const cleaned = resultRaw.replace(/[^\d.]/g, '');
-                        const value = parseFloat(cleaned);
-
-                        if (!isNaN(value) && value >= 1 && value <= 5) {
-                            final_arr[0].push(value.toFixed(2));
-                            final_arr[1].push(tag);
-                        }
-                        break;
-                    }
-                }
+            const value = parseFloat(cleaned);
+            if (!isNaN(value)) {
+                final_arr[0].push(value.toFixed(2));
+                final_arr[1].push(currentSample);
             }
         }
     }
