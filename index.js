@@ -574,26 +574,22 @@ if (cleanResult) {
     }
     if (type === 'fulmont') {
     for (let i = 0; i < txt_arr.length; i++) {
-        const line = txt_arr[i].trim();
-        const line_arr = line.split(/\s+/).filter(Boolean);
+        let line = txt_arr[i].trim();
 
-        // Must contain EPA-200.8, a valid result (not ND), and a '5.0' MCL
-        if (
-            line.includes('EPA-200.8') &&
-            line.includes('5.0') &&
-            !line.includes('ND')
-        ) {
-            // Try to extract the last numeric value before '5.0'
-            const numberMatch = line.match(/(\d+\.\d+)\s+5\.0\s+EPA-200\.8/i);
+        // Skip lines without a numeric value followed by '5.0'
+        if (!line.includes('5.0') || line.includes('ND')) continue;
 
-            if (numberMatch) {
-                const result = parseFloat(numberMatch[1]);
-                if (result >= 1.0 && result <= 5.0) {
-                    // Create the tag by removing the trailing time/date/result/MCL/method
-                    const tagParts = line_arr.slice(0, -6);
-                    const tag = tagParts.join(' ').replace(/^ICP\/MS\s+/, '');
-                    final_arr[0].push(result.toFixed(2));
-                    final_arr[1].push(tag.trim());
+        const parts = line.split(/\s+/);
+
+        // Try to find the number just before 5.0
+        for (let j = 0; j < parts.length - 1; j++) {
+            if (parts[j + 1] === '5.0') {
+                const val = parseFloat(parts[j]);
+                if (!isNaN(val) && val >= 1.0 && val <= 5.0) {
+                    const tag = parts.slice(0, j - 3).join(' ').replace(/\d+$/, '').trim();
+                    final_arr[0].push(val.toFixed(2));
+                    final_arr[1].push(tag);
+                    break;
                 }
             }
         }
