@@ -572,25 +572,33 @@ if (cleanResult) {
             }
         }
     }
-    if (type == 'fulmont') {
-        for (var i = 0; i < txt_arr.length; i++) {
-            var line = txt_arr[i];
-            var line_arr = line.split(' ').filter(String)
-            if (line_arr.includes('EPA-200.8') && line.includes('15') && !(line.includes('ND')) ) {
-                // splice first element and last three
-                line_arr.splice(0, 1)
-                line_arr.splice(-3, 3)
-                var result = parseFloat(line_arr[line_arr.length-1])
-                // splice result, date, time of day, and AM/PM (right to left)
-                line_arr.splice(-4, 4)
-                var tag = line_arr.join(' ')
-                if (result > 1.00 && result < 15.00) {
-                    final_arr[0].push(result);
-                    final_arr[1].push(tag); 
+    if (type === 'fulmont') {
+    for (let i = 0; i < txt_arr.length; i++) {
+        const line = txt_arr[i].trim();
+        const line_arr = line.split(/\s+/).filter(Boolean);
+
+        // Must contain EPA-200.8, a valid result (not ND), and a '5.0' MCL
+        if (
+            line.includes('EPA-200.8') &&
+            line.includes('5.0') &&
+            !line.includes('ND')
+        ) {
+            // Try to extract the last numeric value before '5.0'
+            const numberMatch = line.match(/(\d+\.\d+)\s+5\.0\s+EPA-200\.8/i);
+
+            if (numberMatch) {
+                const result = parseFloat(numberMatch[1]);
+                if (result >= 1.0 && result <= 5.0) {
+                    // Create the tag by removing the trailing time/date/result/MCL/method
+                    const tagParts = line_arr.slice(0, -6);
+                    const tag = tagParts.join(' ').replace(/^ICP\/MS\s+/, '');
+                    final_arr[0].push(result.toFixed(2));
+                    final_arr[1].push(tag.trim());
                 }
             }
         }
     }
+}
     if (type == 'ehs') {
         var search = false;
         for (var i = 0; i < txt_arr.length; i++) {
