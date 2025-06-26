@@ -802,22 +802,33 @@ if (cleanResult) {
             } 
         }
     }
-    if (type =='schneider') {
-        for (var i = 0; i < txt_arr.length; i++) {
-            var line = txt_arr[i];
-            var line_arr = line.split(' ').filter(String)
-            if (line != undefined && line.includes('Metals Analysis')) {
-                var tag = txt_arr[i-2].split(' ')[1];
-                var ahead_arr = txt_arr[i+1].split(' ')
-                var result = ahead_arr[ahead_arr.length-5]
-                if ( (result.includes('<') && result.includes('5')) || 
-                    !(result.includes('<')) && parseFloat(result) > 1.00 && parseFloat(result) < 15) {
-                    final_arr[1].push(tag);
-                    final_arr[0].push(result);
-                }
+    if (type === 'schneider') {
+    for (let i = 0; i < txt_arr.length; i++) {
+        const line = txt_arr[i].trim();
+
+        if (line.includes('Metals Analysis')) {
+            // Get sample tag two lines before
+            const tagLine = txt_arr[i - 2]?.trim();
+            const tagParts = tagLine ? tagLine.split(/\s+/) : [];
+            const tag = tagParts.length > 1 ? tagParts[1] : 'UNKNOWN';
+
+            // Get lead result from the next line
+            const nextLine = txt_arr[i + 1]?.trim();
+            const aheadParts = nextLine ? nextLine.split(/\s+/).filter(Boolean) : [];
+            const result = aheadParts[aheadParts.length - 5];
+
+            if (!result) continue;
+
+            if (
+                (result.includes('<') && result.includes('5')) || 
+                (!result.includes('<') && parseFloat(result) > 1.0 && parseFloat(result) < 15)
+            ) {
+                final_arr[1].push(tag);
+                final_arr[0].push(result);
             }
         }
     }
+}
     if (type=='lianalytical') {
         var scan = false
         for (var i = 0; i < txt_arr.length; i++) {
