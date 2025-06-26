@@ -428,20 +428,20 @@ if (cleanResult) {
     for (let i = 0; i < txt_arr.length; i++) {
         const line = txt_arr[i].trim();
 
-        // Match sample ID
+        // Match sample ID (either "Client Sample ID:" or "Sample:")
         const sampleMatch = line.match(samplePattern);
         if (sampleMatch) {
             currentSample = sampleMatch[2].trim();
             continue;
         }
 
-        // Match lead result
+        // Match Lead values like "Lead 1.23 ug/L" or "Lead <0.5 ug/L"
         const leadMatch = line.match(leadPattern);
         if (leadMatch && currentSample) {
-            let raw = leadMatch[1];
+            let resultRaw = leadMatch[1]; // e.g., "<0.12", "1.3*", "2.0§", "ND"
 
-            // Remove qualifiers (e.g., *, J, §)
-            const cleaned = raw.replace(/[^\d.]/g, '');
+            // Clean off any non-numeric symbols (e.g., "<", "*", "§", "J")
+            const cleaned = resultRaw.replace(/[^\d.]/g, '');
 
             const value = parseFloat(cleaned);
             if (!isNaN(value)) {
