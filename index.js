@@ -432,19 +432,25 @@ if (cleanResult) {
                 // Look ahead for the corresponding Lead line
                 for (let j = i + 1; j < txt_arr.length; j++) {
                     const leadLine = txt_arr[j].trim();
-                    if (/^Lead/i.test(leadLine)) {
-                        const parts = leadLine.split(/\s+/);
-                        const resultRaw = parts[1].replace('*', '').replace('§', '');
 
-                        if (
-                            !resultRaw.includes('<') &&
-                            !resultRaw.toUpperCase().includes('ND')
-                        ) {
-                            const value = parseFloat(resultRaw);
-                            if (!isNaN(value) && value >= 1 && value <= 15) {
-                                final_arr[0].push(value.toFixed(2));
-                                final_arr[1].push(tag);
-                            }
+                    // Stop if we hit a new sample block
+                    if (/Client Sample ID:/i.test(leadLine)) break;
+
+                    if (/^Lead\b/i.test(leadLine)) {
+                        const parts = leadLine.split(/\s+/);
+
+                        // Find the first number-looking entry in the line
+                        const resultRaw = parts.find(p => /^[<]?\d+(\.\d+)?[A-Za-z§*]*$/.test(p));
+                        if (!resultRaw) break;
+
+                        if (resultRaw.includes('<') || resultRaw.toUpperCase().includes('ND')) break;
+
+                        const cleaned = resultRaw.replace(/[^\d.]/g, '');
+                        const value = parseFloat(cleaned);
+
+                        if (!isNaN(value) && value >= 1 && value <= 5) {
+                            final_arr[0].push(value.toFixed(2));
+                            final_arr[1].push(tag);
                         }
                         break;
                     }
