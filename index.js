@@ -711,26 +711,39 @@ if (cleanResult) {
             }
         }
     }
-    if (type=='capital-region') {
-        for (var i = 0; i < txt_arr.length; i++) {
-            var line = txt_arr[i];
-            var line_arr = line.split(' ').filter(String)
-            if (line != undefined && line.includes('Sample Pt:')) {
-                line_arr.splice(0, 2)
-                tag = line_arr[0]
-                var j = i;
-                while ( !(txt_arr[j].split(' ')[0] === 'Lead') ) {
-                    j++;
-                }
-                var result = txt_arr[j].split(' ')[1];
-                //console.log(result)
-                if (!(result.includes('<')) && parseFloat(result)*1000 > 1.00 && parseFloat(result)*1000 < 15) {
-                    final_arr[1].push(tag);
-                    final_arr[0].push(parseFloat(result)*1000)
+    if (type === 'capital-region') {
+    for (let i = 0; i < txt_arr.length; i++) {
+        const line = txt_arr[i];
+        if (line && line.includes('Sample Pt:')) {
+            const lineParts = line.split(' ').filter(Boolean);
+            const tag = lineParts.slice(2).join(' ') || 'UNKNOWN';
+
+            // Look forward to find the Lead result
+            let j = i + 1;
+            while (j < txt_arr.length && !/^\s*Lead\b/i.test(txt_arr[j])) {
+                j++;
+            }
+
+            if (j < txt_arr.length) {
+                const resultLine = txt_arr[j].trim();
+                const match = resultLine.match(/Lead\s*(?:\(mg\/L\))?\s+([<]?\d*\.?\d+)/i);
+                if (match) {
+                    const raw = match[1].trim();
+                    if (!raw.includes('<')) {
+                        const mg_L = parseFloat(raw);
+                        const ug_L = mg_L * 1000;
+
+                        // Keep values ONLY between 1 and 5 µg/L
+                        if (!isNaN(ug_L) && ug_L >= 1 && ug_L <= 5) {
+                            final_arr[0].push(ug_L.toFixed(2));    // Value in µg/L
+                            final_arr[1].push(tag);                // Sample label
+                        }
+                    }
                 }
             }
         }
     }
+}
     if (type =='endyne') {
         
         for (var i = 0; i < txt_arr.length; i++) {
